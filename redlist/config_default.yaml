@@ -1,0 +1,24 @@
+beets_library: null
+pinentry: yes
+enable_deluge: no
+torrent_directory: null
+m3u_directory: null
+restrict_album: no
+
+redacted:
+  username: null
+  password: null
+  save_cookies: yes
+  format_preferences:  # "Format Encoding Media"
+    - 'MP3 V0'
+    - 'MP3 320'
+    - 'FLAC .*'
+    - 'MP3 .*'
+    - '.*'
+
+deluge:
+  host: 'localhost'
+  port: 58846
+  username: null
+  password: null
+  add_paused: no

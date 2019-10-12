@@ -1,0 +1,4 @@
+
+global-exclude .DS_Store
+
+include redlist/config_default.yaml
