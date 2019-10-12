@@ -1,7 +1,14 @@
-#[RED]list
+# [RED]list
 ### Convert Spotify playlists to local m3u's and fill the gaps!
 
 [RED]list is a tool to glue together Spotify, [Beets](https://beets.io), and [REDACTED].
+
+## Installation
+[RED]list requires python 3.6+. 
+
+To install simply run:
+
+`pip install git+https://github.com/Laharah/redlist.git`
 
 ## Usage
 ```
@@ -69,7 +76,7 @@ redacted:
     - 'MP3 320'
     - 'FLAC .*'
     - 'MP3 .*'
-	- '.*'
+    - '.*'
 
 deluge:
   host: 'localhost'
@@ -93,13 +100,13 @@ The config uses YAML syntax. An example config might look like so:
 ``` yaml
 enable_deluge: yes
 deluge:
-	host: example.com
+    host: example.com
 redacted:
-	format_preferences:
-		- 'FLAC .* (CD|Vinyl)'
-		- 'FLAC (lossless|24bit Lossless)'
-		- 'MP3 (V0|320)'
-		- '.*'
+    format_preferences:
+        - 'FLAC .* (CD|Vinyl)'
+        - 'FLAC (lossless|24bit Lossless)'
+        - 'MP3 (V0|320)'
+        - '.*'
 ```
 
 This will set [RED]list to automatically add torrents to a deluge server running at
@@ -118,9 +125,3 @@ be interpreted as such:
 [RED]list will only choose torrents that match at least one of your given preferences.
 This is why you usually want to end your preferences with a permissive rule.
 
-## Installation
-[RED]list requires python 3.6+. 
-
-To install simply run:
-
-`pip install git+https://github.com/Laharah/redlist.git`
