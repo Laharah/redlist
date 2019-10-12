@@ -144,7 +144,7 @@ def entry_point():
     parser.add_option(
         '--downloads',
         dest='torrent_directory',
-        help="Directory new torrents will be saved (exclusive with --deluge)")
+        help="Directory new torrents will be saved to (exclusive with --deluge)")
     parser.add_option('-y',
                       dest='yes',
                       action='store_true',

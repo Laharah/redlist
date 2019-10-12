@@ -6,6 +6,9 @@
 ## Installation
 [RED]list requires python 3.6+. 
 
+[RED]list also expects you to have a populated [Beets](https://beets.io)
+library. [RED]list will use it to find and match your music files.
+
 To install simply run:
 
 `pip install git+https://github.com/Laharah/redlist.git`
@@ -20,7 +23,7 @@ Options:
   --beets-library=BEETS_LIBRARY
                         The beets library to use
   --downloads=TORRENT_DIRECTORY
-                        Directory new torrents will be saved (exclusive with
+                        Directory new torrents will be saved to (exclusive with
                         --deluge)
   -y                    Assume yes to all queries and do not prompt.
   --deluge              Load torrents directly into deluge
@@ -94,8 +97,11 @@ depends on your platform:
 * On Windows: `%APPDATA%\redlist\config.yaml`.
 * On OS X: `~/Library/Application Support/redlist/config.yaml`.
 
-You may also override the config file from the command line with the `--config` option.
+You can use the `--show-config` option at any time to see what your current
+configuration looks like. You may also override your config file from the
+command line with the `--config` option.
 
+### Example
 The config uses YAML syntax. An example config might look like so:
 ``` yaml
 enable_deluge: yes
