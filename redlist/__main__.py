@@ -24,7 +24,10 @@ from . import ui
 log = logging.getLogger(__name__)
 log.parent.setLevel('INFO')
 try:
-    log.parent.handlers[0].setFormatter(ui.UserMessenger())
+    p = log
+    while p.parent is not None:
+        p = p.parent
+    p.handlers[0].setFormatter(ui.UserMessenger())
 except IndexError:
     logging.basicConfig(formatter=ui.UserMessenger())
 
