@@ -108,6 +108,30 @@ async def main(spotlist, yes=False):
         print(f"After download your new buffer will be "
               f"{humanize.naturalsize(new_buff, gnu=True)}")
 
+    if config['enable_deluge'].get():
+        try:
+            with deluge.Client() as client:
+                paused = config['deluge']['add_paused'].get()
+
+                async def add_torrent(torrent):
+                    filename, data = await api.get_torrent(torrent['torrent']['torrentId']
+                                                           )
+                    client.add_torrent_file(filename, data, paused)
+
+                dls = [
+                    asyncio.ensure_future(add_torrent(torrent))
+                    for torrent in downloads.values()
+                ]
+                await asyncio.gather(*dls)
+
+            print('Finished.')
+            return 0
+        except ConnectionRefusedError:
+            print("\nThere was an error connecting to the deluge server.")
+            print("Saving torrents to files instead.")
+            # Fail out to normal download
+
+    # Download to files
     async def dl_torrent(torrent):
         dl_dir = config['torrent_directory'].as_filename()
         filename, data = await api.get_torrent(torrent['torrent']['torrentId'])
@@ -115,24 +139,8 @@ async def main(spotlist, yes=False):
             fout.write(data)
         log.info('Downloaded %s.', filename)
 
-    if not config['enable_deluge'].get():
-        dls = [
-            asyncio.ensure_future(dl_torrent(torrent)) for torrent in downloads.values()
-        ]
-        await asyncio.gather(*dls)
-    else:
-        with deluge.Client() as client:
-            paused = config['deluge']['add_paused'].get()
-
-            async def add_torrent(torrent):
-                filename, data = await api.get_torrent(torrent['torrent']['torrentId'])
-                client.add_torrent_file(filename, data, paused)
-
-            dls = [
-                asyncio.ensure_future(add_torrent(torrent))
-                for torrent in downloads.values()
-            ]
-            await asyncio.gather(*dls)
+    dls = [asyncio.ensure_future(dl_torrent(torrent)) for torrent in downloads.values()]
+    await asyncio.gather(*dls)
 
     print('Finished.')
     return 0
