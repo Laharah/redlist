@@ -7,7 +7,7 @@
 [RED]list requires python 3.6+. 
 
 [RED]list also expects you to have a populated [Beets](https://beets.io)
-library. [RED]list will use it to find and match your music files.
+library. It will use it to find and match your music files.
 
 To install simply run:
 
