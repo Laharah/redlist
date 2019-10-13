@@ -94,7 +94,7 @@ def parse_track_info_string(line):
         if v == 'None':
             kwargs[k] = None
         elif re.match(r'\d+', v):
-            kwargs[k] = int(v)
+            kwargs[k] = float(v)
         else:
             kwargs[k] = v.strip('\'"')
     return TrackInfo(**kwargs)
