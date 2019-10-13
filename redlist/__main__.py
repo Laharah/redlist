@@ -81,9 +81,10 @@ async def main(spotlist, yes=False):
     missing = [t for t, v in results.items() if v is None]
     log.info('Found matches for %d/%d unmatched tracks',
              len(unmatched) - len(missing), len(unmatched))
-    print('\nThe Following tracks could not be found on [REDACTED]:')
-    for t in missing:
-        print(t)
+    if missing:
+        print('\nThe Following tracks could not be found on [REDACTED]:')
+        for t in missing:
+            print(t)
 
     # Download torrents
     if not yes:
