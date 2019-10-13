@@ -108,6 +108,7 @@ class RedAPI:
         async with await self.session.post(loginpage, data=data) as resp:
             pass
         await self._auth()
+        await self.session.token_bucket.get()  #prevent request limit hit
 
     async def get_torrent(self, torrent_id):
         "Download the torrent at torrent_id -> (filename, data)"
