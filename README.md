@@ -69,6 +69,7 @@ enable_deluge: no 			# Load downloaded torrents into deluge
 torrent_directory: null 	# Directory save downloaded torrents
 m3u_directory: null 		# Directory to save processed m3u playlists
 restrict_album: no 			# Only allow tracks to match if they are from the same album
+overwrite_m3u: no 			# If argument is m3u, overwrite it instead of saving to m3u_dir
 
 redacted:
   username: null

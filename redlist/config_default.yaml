@@ -4,6 +4,7 @@ enable_deluge: no
 torrent_directory: null
 m3u_directory: null
 restrict_album: no
+overwrite_m3u: no
 
 redacted:
   username: null

@@ -44,8 +44,16 @@ async def main(spotlist, yes=False):
     matched = matching.beets_match(track_info, library, config['restrict_album'].get())
     unmatched = [track for track, i in matched.items() if i is None]
     log.info('Finished. There are %d tracks that could not be matched.', len(unmatched))
-    save_dir = config['m3u_directory'].as_filename()
-    save_path = Path(save_dir) / '{}.m3u'.format(title)
+    if re.match(r'.*\.(m3u|m3u8)$', spotlist) and config['overwrite_m3u'].get():
+        save_path = Path(spotlist)
+        overwrite_flag = True
+    else:
+        save_dir = config['m3u_directory'].as_filename()
+        save_path = Path(save_dir) / '{}.m3u'.format(title)
+        overwrite_flag = False
+    if save_path.exists() and not overwrite_flag:
+        if not yes and not re.match(r'y', input('\nOverwrite %s?: ' % save_path)):
+            return 0
     playlist.create_m3u_from_info(matched, save_path)
 
     if len(unmatched) == 0:
@@ -179,6 +187,11 @@ def entry_point():
                       dest='show_config',
                       action='store_true',
                       help="Dump the current configuration values.")
+    parser.add_option(
+        '--overwrite-m3u',
+        dest='overwrite_m3u',
+        action='store_true',
+        help='if argument is an m3u, overwrite it instead of outputting to playlist dir.')
     options, args = parser.parse_args()
     if options.configfile:
         try:

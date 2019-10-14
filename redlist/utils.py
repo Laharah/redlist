@@ -29,7 +29,7 @@ def resolve_configured_paths(cfg):
             paths[key] = Path('.')
     for key in paths:
         if not paths[key].exists():
-            raise FileNotFoundError(f'Could not find {path[key]} for option "{key}"')
+            raise FileNotFoundError(f'Could not find {paths[key]} for option "{key}"')
         paths[key] = str(paths[key])
     cfg.set_args(paths)
 
