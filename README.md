@@ -23,8 +23,8 @@ Options:
   --beets-library=BEETS_LIBRARY
                         The beets library to use
   --downloads=TORRENT_DIRECTORY
-                        Directory new torrents will be saved to (exclusive with
-                        --deluge)
+                        Directory new torrents will be saved to (exclusive
+                        with --deluge)
   -y                    Assume yes to all queries and do not prompt.
   --deluge              Load torrents directly into deluge
   --deluge-server=DELUGE.HOST
@@ -33,6 +33,8 @@ Options:
                         Port of deluge server, (Default: 58846)
   --restrict-album      Only match tracks if they come from the same album.
   --show-config         Dump the current configuration values.
+  --overwrite-m3u       if argument is an m3u, overwrite it instead of
+                        outputting to playlist dir.
 ```
 
 Where playlist is a Spotify playlist (uri or url), an m3u, or a csv file (artist, title, album). 
