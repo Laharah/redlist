@@ -117,14 +117,15 @@ async def main(spotlist, yes=False):
         print(f"After download your new buffer will be "
               f"{humanize.naturalsize(new_buff, gnu=True)}")
 
+    use_fl = config['redacted']['use_fl_tokens']
     if config['enable_deluge'].get():
         try:
             with deluge.Client() as client:
                 paused = config['deluge']['add_paused'].get()
 
                 async def add_torrent(torrent):
-                    filename, data = await api.get_torrent(torrent['torrent']['torrentId']
-                                                           )
+                    filename, data = await api.get_torrent(
+                        torrent['torrent']['torrentId'], use_fl)
                     client.add_torrent_file(filename, data, paused)
 
                 dls = [
@@ -143,7 +144,7 @@ async def main(spotlist, yes=False):
     # Download to files
     async def dl_torrent(torrent):
         dl_dir = config['torrent_directory'].as_filename()
-        filename, data = await api.get_torrent(torrent['torrent']['torrentId'])
+        filename, data = await api.get_torrent(torrent['torrent']['torrentId'], use_fl)
         with open(Path(dl_dir) / filename, 'wb') as fout:
             fout.write(data)
         log.info('Downloaded %s.', filename)
@@ -183,6 +184,10 @@ def entry_point():
                       dest='restrict_album',
                       action='store_true',
                       help="Only match tracks if they come from the same album.")
+    parser.add_option('--use-fl-tokens',
+                      dest='redacted.use_fl_tokens',
+                      help="Use freeleach tokens",
+                      action='store_true')
     parser.add_option('--show-config',
                       dest='show_config',
                       action='store_true',

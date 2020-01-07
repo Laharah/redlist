@@ -32,6 +32,7 @@ Options:
   --deluge-port=DELUGE.PORT
                         Port of deluge server, (Default: 58846)
   --restrict-album      Only match tracks if they come from the same album.
+  --use-fl-tokens       Use freeleach tokens
   --show-config         Dump the current configuration values.
   --overwrite-m3u       if argument is an m3u, overwrite it instead of
                         outputting to playlist dir.
@@ -77,7 +78,8 @@ redacted:
   username: null
   password: null
   save_cookies: yes
-  format_preferences:  # "Format Encoding Media"
+  use_fl_tokens: no  	# Use freeleach tokens 
+  format_preferences:  	# "Format Encoding Media"
     - 'MP3 V0'
     - 'MP3 320'
     - 'FLAC .*'

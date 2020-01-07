@@ -5,6 +5,9 @@ import warnings
 import json
 import re
 import random
+import logging
+
+log = logging.getLogger(__name__)
 
 
 class LoginException(Exception):
@@ -18,7 +21,7 @@ class TokenBucket():
         self.max_tokens = max_tokens
         self.time_frame = time_frame
         self.last_update = time.monotonic()
-        self.tokens = float(max_tokens)
+        self.tokens = 0
 
     def update_tokens(self):
         now = time.monotonic()
@@ -83,6 +86,7 @@ class RedAPI:
         self.authkey = None
         self.passkey = None
         self.server = server
+        self.fl_bucket = TokenBucket(1, 62)
 
     async def _auth(self):
         "Get authkey from server, must always be done after login or first connection"
@@ -110,7 +114,7 @@ class RedAPI:
         await self._auth()
         self.session.token_bucket.tokens -= 2  # trying to prevent hidden rate after login
 
-    async def get_torrent(self, torrent_id):
+    async def get_torrent(self, torrent_id, use_fl=False):
         "Download the torrent at torrent_id -> (filename, data)"
         torrentpage = self.server + '/torrents.php'
         params = {
@@ -119,12 +123,17 @@ class RedAPI:
             'authkey': self.authkey,
             'torrent_pass': self.passkey
         }
+        if use_fl:
+            await self.fl_bucket.get()
+            params['usetoken'] = '1'
         async with await self.session.get(torrentpage,
                                           params=params,
                                           allow_redirects=False) as response:
             expected = 'application/x-bittorrent; charset=utf-8'
             if response.headers['content-type'] != expected:
-                raise ValueError("Wrong content-type")
+                log.error(response.headers)
+                raise ValueError("Wrong content-type: {}".format(
+                    response.headers['content-type']))
             match = re.search(r'filename="(.+)"', response.headers['content-disposition'])
             filename = match.group(1)
             return filename, await response.content.read()

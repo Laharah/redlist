@@ -10,6 +10,7 @@ redacted:
   username: null
   password: null
   save_cookies: yes
+  use_fl_tokens: no
   format_preferences:  # "Format Encoding Media"
     - 'MP3 V0'
     - 'MP3 320'
