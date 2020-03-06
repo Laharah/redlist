@@ -141,6 +141,9 @@ async def search_torrent_groups(track_info, torrent_groups, api, restrict_album=
                                     '',
                                     track_canidate,
                                     flags=re.I)
+            # Clean useless parenteses from filename
+            if not track_info.title.ends_with(')'):
+                track_canidate = re.sub(r'\(.*\)$', '', track_canidate)
             # Clean track numbers from filename
             track_canidate = re.sub(r'^\d+[\W\s]+', '', track_canidate)
             canidate_info = matching.TrackInfo(title=track_canidate,
