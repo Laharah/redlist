@@ -88,7 +88,9 @@ async def parse_playlist(argument, library):
 
 def parse_track_info_string(line):
     kwargs = {}
-    args = re.search(r'TrackInfo\((.*)\)', line).group(1).split(', ')
+    line = re.search(r'TrackInfo\((.*)\)', line).group(1)
+    args = re.findall(r'[\w|_].+?\=[\',\"]?.*?[\d|\'|\"]\,', line)
+    args = [a.strip('\'\",') for a in args]
     for a in args:
         k, v = a.split('=')
         if v == 'None':
