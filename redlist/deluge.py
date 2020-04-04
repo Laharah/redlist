@@ -37,7 +37,14 @@ class Client:
     def add_torrent_file(self, filename, data, paused=False):
         options = {'add_paused': paused} if paused else {}
         data = base64.encodebytes(data)
-        res = self._client.call('core.add_torrent_file', filename, data, options)
+        try:
+            res = self._client.call('core.add_torrent_file', filename, data, options)
+        except deluge_client.client.RemoteException as e:
+            if e.__class__.__name__ == 'AddTorrentError':
+                res = None
+            else:
+                log.error('Problem Adding torrent %s.', filename, exc_info=True)
+                return None
         if res is None:
             log.error('Problem when adding torrent %s, it may already exsist.', filename)
         else:

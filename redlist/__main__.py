@@ -130,7 +130,7 @@ async def main(spotlist, yes=False):
 
                 dls = [
                     asyncio.ensure_future(add_torrent(torrent))
-                    for torrent in downloads.values()
+                    for torrent in set(downloads.values())
                 ]
                 await asyncio.gather(*dls)
 
