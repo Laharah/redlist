@@ -113,9 +113,10 @@ async def main(spotlist, yes=False):
     else:
         print('\nDownloading the following torrents:')
     for torrent in downloads.values():
-        m = '{} - {} [{}][{} {}]'.format(
+        m = '{} - {} [{}][{} {}]: torrentid={}'.format(
             *[torrent[k] for k in ('artist', 'groupName')] +
-            [torrent['torrent'][k] for k in 'media format encoding'.split()])
+            [torrent['torrent'][k] for k in 'media format encoding'.split()] +
+            [torrent['torrent']['torrentId']])
         print('\t', m)
     if not yes and not re.match('y', input('(Yes/No)'), re.I):
         return 0
