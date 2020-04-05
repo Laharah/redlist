@@ -94,12 +94,24 @@ async def main(spotlist, yes=False):
         for t in missing:
             print(t)
 
+    #prune duplicates
+    torrent_ids = set()
+    downloads = {}
+    for t, g in results.items():
+        if g is None:
+            continue
+        torrent_id = g['torrent']['torrentId']
+        if torrent_id in torrent_ids:
+            continue
+        else:
+            torrent_ids.add(torrent_id)
+            downloads[t] = g
+
     # Download torrents
     if not yes:
         print('\nWould you like to download the torrents for these albums?:')
     else:
         print('\nDownloading the following torrents:')
-    downloads = {t: group for t, group in results.items() if group is not None}
     for torrent in downloads.values():
         m = '{} - {} [{}][{} {}]'.format(
             *[torrent[k] for k in ('artist', 'groupName')] +
