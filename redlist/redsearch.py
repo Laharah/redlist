@@ -46,7 +46,9 @@ async def find_album(track_info, api: RedAPI, restrict_album=True):
         ]
         prefered = choose_prefered_torrent(group, prefs)
         if prefered is None:
-            log.info('Could not find a torrent for %s that fits your current preferences.', track_info)
+            log.info(
+                'Could not find a torrent for %s that fits your current preferences.',
+                track_info)
         del group['torrents']
         group['torrent'] = prefered
         group['groupName'] = html.unescape(group['groupName'])
@@ -124,7 +126,8 @@ async def search_torrent_groups(track_info, torrent_groups, api, restrict_album=
         group = torrent_groups[group]
         prefered = choose_prefered_torrent(group, prefs)
         if prefered is None:
-            log.info('Could not find a torrent for %s that fits your current prefrences', group['groupName'])
+            log.info('Could not find a torrent for %s that fits your current prefrences',
+                     group['groupName'])
             return None
         log.info('Considering %s: id=%s for "%s"', group['groupName'],
                  prefered['torrentId'], track_info.title)
@@ -132,6 +135,7 @@ async def search_torrent_groups(track_info, torrent_groups, api, restrict_album=
         full_torrent_data = full_torrent_data['response']
         torrent_data = full_torrent_data['torrent']
         for track_canidate in torrent_data['fileList'].split('|||'):
+            original_canidate = track_canidate
             match = re.match(r'(.+)\.(mp3|flac|ogg|mp4|m4a|ac3|dts){.*$', track_canidate)
             if not match:
                 continue
@@ -146,9 +150,13 @@ async def search_torrent_groups(track_info, torrent_groups, api, restrict_album=
                 track_canidate = re.sub(r'\(.*\)$', '', track_canidate)
             # Clean track numbers from filename
             track_canidate = re.sub(r'^\d+[\W\s]+', '', track_canidate)
-            canidate_info = matching.TrackInfo(title=track_canidate,
-                                               artist=group['artist_match'],
-                                               album=group['groupName'])
+            try:
+                canidate_info = matching.TrackInfo(title=track_canidate,
+                                                   artist=group['artist_match'],
+                                                   album=group['groupName'])
+            except ValueError:
+                log.error('could not make TrackInfo for %s.', track_info)
+                continue
 
             dist = matching.track_distance(track_info,
                                            canidate_info,

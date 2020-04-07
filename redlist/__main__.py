@@ -75,10 +75,18 @@ async def main(spotlist, yes=False):
         return 0
     log.info('SUCCESS!')
     log.info('Begining search for %s tracks, This may take a while.', len(unmatched))
+
+    async def safe_find_album(track, api):
+        ra = config['restrict_album'].get()
+        try:
+            return await redsearch.find_album(track, api, restrict_album=ra)
+        except (RuntimeError, ValueError, KeyError) as e:
+            log.error('Error while searching for track %s.', track, exc_info=True)
+            return None
+
     tasks = {}
     for track in unmatched:
-        task = asyncio.ensure_future(
-            redsearch.find_album(track, api, restrict_album=False))
+        task = asyncio.ensure_future(safe_find_album(track, api))
         tasks[track] = task
     match_start = time.monotonic()
     await asyncio.gather(*tasks.values())
