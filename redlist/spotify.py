@@ -8,6 +8,9 @@ import re
 from cryptography import fernet
 from urllib.parse import urlencode
 from pathlib import Path
+import os
+
+from beets.util import sanitize_path
 
 from . import config
 from . import ui
@@ -51,6 +54,8 @@ async def fetch_play_list_data(playlist_id, token=None):
             except KeyError:  # more than 100 tracks
                 tracks = json
             items.extend(matching.TrackInfo.from_spotify(t) for t in tracks['items'])
+    name = re.sub(r'[\\/]', '_', name)
+    name = sanitize_path(name)
     return name, items
 
 
