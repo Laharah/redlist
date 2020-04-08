@@ -2,7 +2,7 @@ from setuptools import setup
 
 setup(
     name='redlist',
-    version='0.2.5',
+    version='0.2.6',
     url='',
     license='MIT',
     author='laharah',

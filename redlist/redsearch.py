@@ -155,7 +155,8 @@ async def search_torrent_groups(track_info, torrent_groups, api, restrict_album=
                                                    artist=group['artist_match'],
                                                    album=group['groupName'])
             except ValueError:
-                log.error('could not make TrackInfo for %s.', track_info)
+                log.error('could not make TrackInfo for %s from torrent %s',
+                          original_canidate, prefered['torrentId'])
                 continue
 
             dist = matching.track_distance(track_info,
