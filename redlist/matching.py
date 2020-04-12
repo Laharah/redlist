@@ -10,6 +10,17 @@ VA_ARTISTS = '', 'various artists', 'various', 'va', 'unknown'
 
 
 class TrackInfo:
+    """
+    Stores information about a potential track.
+    Required Arguments:
+        artist: the artist name
+        title: the title of the track
+    Additional Arguments:
+        album: Title of the album the track is from
+        length: Length of track in mm:ss format
+    
+    All other keyword arguments will be stored as attributes.
+    """
     def __init__(self, *args, **kwargs):
         arg_order = ['artist', 'title', 'album', 'length']
         self.fields = []
