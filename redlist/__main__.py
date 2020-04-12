@@ -223,7 +223,7 @@ def entry_point():
         help='if argument is an m3u, overwrite it instead of outputting to playlist dir.')
     parser.add_argument('--log-level',
                         dest='loglevel',
-                        help='Set the log level',
+                        help='Set the log level. (Default: INFO)',
                         default='INFO',
                         choices=['CRITICAL', 'ERROR', 'WARNING', 'INFO', 'DEBUG'])
     options = parser.parse_args()
