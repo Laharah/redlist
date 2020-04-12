@@ -7,6 +7,7 @@ import logging
 import re
 import argparse
 import time
+import os
 
 import beets.library
 from pynentry import PinEntryCancelled
@@ -180,7 +181,7 @@ async def main(spotlist, yes=False):
 
 def entry_point():
     parser = argparse.ArgumentParser(usage='redlist [options] <playlist>...')
-    parser.add_argument('playlist', nargs='+')
+    parser.add_argument('playlist', nargs='*')
     parser.add_argument('--config', dest='configfile', help='Path to configuration file.')
     parser.add_argument("--beets-library",
                         dest='beets_library',
@@ -234,13 +235,16 @@ def entry_point():
             sys.exit(1)
     if options.show_config:
         utils.resolve_configured_paths(config)
+        print('# Configuration file at "{}"\n'.format(
+            os.path.join(config.config_dir(), 'config.yaml')))
         print(config.dump(redact=True))
         sys.exit()
+    args = options.playlist
     if len(args) < 1:
         parser.error('Must specify at least one playlist')
+    log.setLevel(options.loglevel)
     config.set_args(options, dots=True)
     utils.resolve_configured_paths(config)
-    args = options.playlist
     spotlists = args
     loop = asyncio.get_event_loop()
     results = []
