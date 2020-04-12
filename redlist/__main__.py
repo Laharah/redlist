@@ -5,7 +5,7 @@ import sys
 from pathlib import Path
 import logging
 import re
-import optparse
+import argparse
 import time
 
 import beets.library
@@ -81,7 +81,8 @@ async def main(spotlist, yes=False):
         try:
             return await redsearch.find_album(track, api, restrict_album=ra)
         except (RuntimeError, ValueError, KeyError) as e:
-            log.error('Error while searching for track %s.', track, exc_info=True)
+            log.error('Error while searching for track %s.', track)
+            log.debug('Stack Trace:', exc_info=True)
             return None
 
     tasks = {}
@@ -178,47 +179,53 @@ async def main(spotlist, yes=False):
 
 
 def entry_point():
-    parser = optparse.OptionParser(usage='redlist [options] <playlist>...')
-    parser.add_option('--config', dest='configfile', help='Path to configuration file.')
-    parser.add_option("--beets-library",
-                      dest='beets_library',
-                      help="The beets library to use")
-    parser.add_option(
+    parser = argparse.ArgumentParser(usage='redlist [options] <playlist>...')
+    parser.add_argument('playlist', nargs='+')
+    parser.add_argument('--config', dest='configfile', help='Path to configuration file.')
+    parser.add_argument("--beets-library",
+                        dest='beets_library',
+                        help="The beets library to use")
+    parser.add_argument(
         '--downloads',
         dest='torrent_directory',
         help="Directory new torrents will be saved to (exclusive with --deluge)")
-    parser.add_option('-y',
-                      dest='yes',
-                      action='store_true',
-                      help="Assume yes to all queries and do not prompt.")
-    parser.add_option('--deluge',
-                      dest='enable_deluge',
-                      action='store_true',
-                      help="Load torrents directly into deluge")
-    parser.add_option('--deluge-server',
-                      dest="deluge.host",
-                      help="address of deluge server, (Default: localhost)")
-    parser.add_option('--deluge-port',
-                      dest="deluge.port",
-                      help="Port of deluge server, (Default: 58846)")
-    parser.add_option('--restrict-album',
-                      dest='restrict_album',
-                      action='store_true',
-                      help="Only match tracks if they come from the same album.")
-    parser.add_option('--use-fl-tokens',
-                      dest='redacted.use_fl_tokens',
-                      help="Use freeleach tokens",
-                      action='store_true')
-    parser.add_option('--show-config',
-                      dest='show_config',
-                      action='store_true',
-                      help="Dump the current configuration values.")
-    parser.add_option(
+    parser.add_argument('-y',
+                        dest='yes',
+                        action='store_true',
+                        help="Assume yes to all queries and do not prompt.")
+    parser.add_argument('--deluge',
+                        dest='enable_deluge',
+                        action='store_true',
+                        help="Load torrents directly into deluge")
+    parser.add_argument('--deluge-server',
+                        dest="deluge.host",
+                        help="address of deluge server, (Default: localhost)")
+    parser.add_argument('--deluge-port',
+                        dest="deluge.port",
+                        help="Port of deluge server, (Default: 58846)")
+    parser.add_argument('--restrict-album',
+                        dest='restrict_album',
+                        action='store_true',
+                        help="Only match tracks if they come from the same album.")
+    parser.add_argument('--use-fl-tokens',
+                        dest='redacted.use_fl_tokens',
+                        help="Use freeleach tokens",
+                        action='store_true')
+    parser.add_argument('--show-config',
+                        dest='show_config',
+                        action='store_true',
+                        help="Dump the current configuration values.")
+    parser.add_argument(
         '--overwrite-m3u',
         dest='overwrite_m3u',
         action='store_true',
         help='if argument is an m3u, overwrite it instead of outputting to playlist dir.')
-    options, args = parser.parse_args()
+    parser.add_argument('--log-level',
+                        dest='loglevel',
+                        help='Set the log level',
+                        default='INFO',
+                        choices=['CRITICAL', 'ERROR', 'WARNING', 'INFO', 'DEBUG'])
+    options = parser.parse_args()
     if options.configfile:
         try:
             config.set_file(options.configfile)
@@ -233,6 +240,7 @@ def entry_point():
         parser.error('Must specify at least one playlist')
     config.set_args(options, dots=True)
     utils.resolve_configured_paths(config)
+    args = options.playlist
     spotlists = args
     loop = asyncio.get_event_loop()
     results = []
