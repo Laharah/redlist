@@ -86,7 +86,7 @@ class RedAPI:
         self.authkey = None
         self.passkey = None
         self.server = server
-        self.fl_bucket = TokenBucket(1, 62)
+        self.fl_bucket = TokenBucket(1, 70)
 
     async def _auth(self):
         "Get authkey from server, must always be done after login or first connection"
@@ -132,6 +132,8 @@ class RedAPI:
             expected = 'application/x-bittorrent; charset=utf-8'
             if response.headers['content-type'] != expected:
                 log.error(response.headers)
+                body = await response.content.read()
+                log.error(body)
                 raise ValueError("Wrong content-type: {}".format(
                     response.headers['content-type']))
             match = re.search(r'filename="(.+)"', response.headers['content-disposition'])

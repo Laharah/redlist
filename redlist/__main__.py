@@ -149,7 +149,10 @@ async def main(spotlist, yes=False):
                 async def add_torrent(torrent):
                     filename, data = await api.get_torrent(
                         torrent['torrent']['torrentId'], use_fl)
-                    client.add_torrent_file(filename, data, paused)
+                    try:
+                        client.add_torrent_file(filename, data, paused)
+                    except ValueError:
+                        log.error('Could not download torrent %s.', torrent['torrent']['torrentId']) 
 
                 dls = [
                     asyncio.ensure_future(add_torrent(torrent))
@@ -196,7 +199,7 @@ def entry_point():
                         help="Assume yes to all queries and do not prompt.")
     parser.add_argument('--deluge',
                         dest='enable_deluge',
-                        action='store_true',
+                        action='store',
                         help="Load torrents directly into deluge")
     parser.add_argument('--deluge-server',
                         dest="deluge.host",
@@ -206,12 +209,12 @@ def entry_point():
                         help="Port of deluge server, (Default: 58846)")
     parser.add_argument('--restrict-album',
                         dest='restrict_album',
-                        action='store_true',
+                        action='store',
                         help="Only match tracks if they come from the same album.")
     parser.add_argument('--use-fl-tokens',
                         dest='redacted.use_fl_tokens',
                         help="Use freeleach tokens",
-                        action='store_true')
+                        action='store')
     parser.add_argument('--show-config',
                         dest='show_config',
                         action='store_true',
@@ -219,7 +222,7 @@ def entry_point():
     parser.add_argument(
         '--overwrite-m3u',
         dest='overwrite_m3u',
-        action='store_true',
+        action='store',
         help='if argument is an m3u, overwrite it instead of outputting to playlist dir.')
     parser.add_argument('--log-level',
                         dest='loglevel',
