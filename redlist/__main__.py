@@ -44,7 +44,9 @@ async def main(spotlist, yes=False):
     # Match exsisting tracks
     log.info('Matching track list to beets library...')
     matched = matching.beets_match(track_info, library, config['restrict_album'].get())
-    unmatched = [track for track, i in matched.items() if i is None]
+    unmatched = [
+        track for track, i in matched.items() if i is None and not isinstance(track, str)
+    ]
     log.info('Finished. There are %d tracks that could not be matched.', len(unmatched))
     if re.match(r'.*\.(m3u|m3u8)$', spotlist) and config['overwrite_m3u'].get():
         save_path = Path(spotlist)
@@ -56,7 +58,8 @@ async def main(spotlist, yes=False):
     if save_path.exists() and not overwrite_flag:
         if not yes and not re.match(r'y', input('\nOverwrite %s?: ' % save_path)):
             return 0
-    playlist.create_m3u_from_info(matched, save_path)
+    playlist.create_m3u_from_info(
+        matched, save_path, url=spotlist if playlist.parse_spotfiy_id(spotlist) else None)
 
     if len(unmatched) == 0:
         return 0

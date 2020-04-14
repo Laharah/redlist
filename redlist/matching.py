@@ -1,5 +1,6 @@
 import re
 import shlex
+import logging
 from collections import OrderedDict
 from itertools import zip_longest
 
@@ -8,6 +9,7 @@ from beets import config as beetconfig
 
 VA_ARTISTS = '', 'various artists', 'various', 'va', 'unknown'
 
+log = logging.getLogger(__name__)
 
 class TrackInfo:
     """
@@ -137,6 +139,9 @@ def beets_match(track_info, lib, restrict_album=False):
         track_info = [t for t, v in original.items() if v is None]
     matched = {}
     for t in track_info:
+        if not isinstance(t, TrackInfo):
+            log.debug('%s is not a TrackInfo object, skipping.', t)
+            continue
         res = list(lib.items(shlex.quote('title:' + t.title)))
         if not res and t.album:
             res.extend(lib.items(shlex.quote('album:' + t.album)))

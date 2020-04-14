@@ -40,15 +40,20 @@ def get_sp_data(spotlist):
     return tracks
 
 
-def create_m3u_from_info(track_infos, output: Path):
+def create_m3u_from_info(track_infos, output: Path, url=None):
     "From a mapping of TrackInfo -> beetsLibraryItems, create a m3u playlist"
     log.info('Writing m3u file to %s.', output)
     with open(output, 'wb') as fout:
+        if url:
+            fout.write('# {}\n'.format(url).encode('utf8'))
         for track, item in track_infos.items():
             try:
                 fout.write(item.path)
             except AttributeError:
-                fout.write(b'# ' + repr(track).encode('utf8'))
+                if isinstance(track, str):
+                    fout.write(track.encode('utf8'))
+                else:
+                    fout.write(b'# ' + repr(track).encode('utf8'))
             fout.write(b'\n')
 
 
@@ -60,6 +65,9 @@ def create_info_from_m3u(m3u: Path, lib):
         if line.startswith('# TrackInfo'):
             info = parse_track_info_string(line)
             matches[info] = None
+        elif line.startswith('#'):
+            matches[line] = None
+            continue
         else:
             item = lib.items(shlex.quote('path:' + line)).get()
             if item is None:
@@ -71,10 +79,10 @@ def create_info_from_m3u(m3u: Path, lib):
 
 async def parse_playlist(argument, library):
     'Given a path or spotify uri return playlist_name, track_info'
-    match = re.match(r'.*spotify.*[:/]playlist[:/]([\w\d]+)', argument)
-    if match:
-        log.info('Fetching playlist %s from spotify.', match.group(1))
-        return await spotify.fetch_play_list_data(match.group(1))
+    spotify_id = parse_spotfiy_id(argument)
+    if spotify_id:
+        log.info('Fetching playlist %s from spotify.', spotify_id)
+        return await spotify.fetch_play_list_data(spotify_id)
     f = Path(argument)
     if not f.exists():
         log.error('Could not find the file %s', f)
@@ -85,6 +93,10 @@ async def parse_playlist(argument, library):
     log.info('Reading in csv file %s.', f.stem)
     return f.stem, get_sp_data(f)
 
+def parse_spotfiy_id(address):
+    "Return the playlist id if it's a spotify playlist. Otherwise return False"
+    match = re.match(r'.*spotify.*[:/]playlist[:/]([\w\d]+)', address)
+    return match.group(1) if match else None
 
 def parse_track_info_string(line):
     kwargs = {}
@@ -100,3 +112,4 @@ def parse_track_info_string(line):
         else:
             kwargs[k] = v.strip('\'"')
     return TrackInfo(**kwargs)
+
