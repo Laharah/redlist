@@ -16,23 +16,27 @@ class LoginException(Exception):
 
 
 class TokenBucket():
-    def __init__(self, max_tokens, time_frame):
-        self.rate = max_tokens / time_frame
-        self.max_tokens = max_tokens
-        self.time_frame = time_frame
+    def __init__(self, capacity, fill_rate):
+        self.rate = fill_rate
+        self.capacity = capacity
         self.last_update = time.monotonic()
-        self.tokens = 0
+        self._tokens = capacity
 
-    def update_tokens(self):
+    @property
+    def tokens(self):
         now = time.monotonic()
-        new_tokens = (now - self.last_update) * self.rate
-        if self.tokens + new_tokens >= 1:
-            self.tokens = min((self.max_tokens, self.tokens + new_tokens))
-            self.last_update = now
+        if self._tokens < self.capacity:
+            new_tokens = (now - self.last_update) * self.rate
+            self._tokens = min(self.capacity, self._tokens + new_tokens)
+        self.last_update = now
+        return self._tokens
+
+    @tokens.setter
+    def tokens(self, value):
+       self._tokens = value
 
     async def get(self):
         while self.tokens < 1:
-            self.update_tokens()
             await asyncio.sleep(1)
         self.tokens -= 1
         return 1
@@ -42,8 +46,8 @@ with warnings.catch_warnings():
     warnings.simplefilter("ignore", category=DeprecationWarning)
 
     class RateLimitedSession(aiohttp.ClientSession):
-        def __init__(self, max_tokens, time_frame, *args, **kwargs):
-            self.token_bucket = TokenBucket(max_tokens, time_frame)
+        def __init__(self, request_burst, request_rate, *args, **kwargs):
+            self.token_bucket = TokenBucket(request_burst, request_rate)
             super().__init__(*args, **kwargs)
 
         async def get(self, *args, **kwargs):
@@ -78,7 +82,7 @@ headers = {
 
 class RedAPI:
     def __init__(self, user=None, server="https://redacted.ch", cookies=None):
-        self.session = RateLimitedSession(4, 11, headers=headers)
+        self.session = RateLimitedSession(4, 4 / 11, headers=headers)
         if cookies:
             self.session.cookie_jar.load(cookies)
         self.authed = False
@@ -86,7 +90,7 @@ class RedAPI:
         self.authkey = None
         self.passkey = None
         self.server = server
-        self.fl_bucket = TokenBucket(1, 62)
+        self.fl_bucket = TokenBucket(1, 1/70)
 
     async def _auth(self):
         "Get authkey from server, must always be done after login or first connection"
@@ -112,7 +116,6 @@ class RedAPI:
         async with await self.session.post(loginpage, data=data) as resp:
             pass
         await self._auth()
-        self.session.token_bucket.tokens -= 2  # trying to prevent hidden rate after login
 
     async def get_torrent(self, torrent_id, use_fl=False):
         "Download the torrent at torrent_id -> (filename, data)"
