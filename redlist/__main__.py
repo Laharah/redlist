@@ -118,6 +118,9 @@ async def main(spotlist, yes=False):
             downloads[t] = g
 
     # Download torrents
+    if not downloads:
+        print('No new torrents to download.')
+        return 0
     if not yes:
         print('\nWould you like to download the torrents for these albums?:')
     else:
