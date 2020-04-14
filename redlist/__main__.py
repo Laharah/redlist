@@ -1,3 +1,4 @@
+__doc__ = """Save spotify playlists as m3u and fill in missing songs from [REDACTED]"""
 from collections import OrderedDict
 import humanize
 import asyncio
@@ -155,7 +156,8 @@ async def main(spotlist, yes=False):
                     try:
                         client.add_torrent_file(filename, data, paused)
                     except ValueError:
-                        log.error('Could not download torrent %s.', torrent['torrent']['torrentId']) 
+                        log.error('Could not download torrent %s.',
+                                  torrent['torrent']['torrentId'])
 
                 dls = [
                     asyncio.ensure_future(add_torrent(torrent))
@@ -186,7 +188,8 @@ async def main(spotlist, yes=False):
 
 
 def entry_point():
-    parser = argparse.ArgumentParser(usage='redlist [options] <playlist>...')
+    parser = argparse.ArgumentParser(usage='redlist [options] <playlist>...',
+                                     description=__doc__)
     parser.add_argument('playlist', nargs='*')
     parser.add_argument('--config', dest='configfile', help='Path to configuration file.')
     parser.add_argument("--beets-library",
@@ -202,7 +205,8 @@ def entry_point():
                         help="Assume yes to all queries and do not prompt.")
     parser.add_argument('--deluge',
                         dest='enable_deluge',
-                        action='store',
+                        action='store_const',
+                        const=True,
                         help="Load torrents directly into deluge")
     parser.add_argument('--deluge-server',
                         dest="deluge.host",
@@ -212,20 +216,24 @@ def entry_point():
                         help="Port of deluge server, (Default: 58846)")
     parser.add_argument('--restrict-album',
                         dest='restrict_album',
-                        action='store',
+                        action='store_const',
+                        const=True,
                         help="Only match tracks if they come from the same album.")
     parser.add_argument('--use-fl-tokens',
                         dest='redacted.use_fl_tokens',
-                        help="Use freeleach tokens",
-                        action='store')
+                        help="Use freeleach tokens "
+                        "(note: slows torrent download SIGNIFICANTLY).",
+                        action='store_const',
+                        const=True)
     parser.add_argument('--show-config',
                         dest='show_config',
                         action='store_true',
-                        help="Dump the current configuration values.")
+                        help="Dump the current configuration values and exit.")
     parser.add_argument(
         '--overwrite-m3u',
         dest='overwrite_m3u',
-        action='store',
+        action='store_const',
+        const=True,
         help='if argument is an m3u, overwrite it instead of outputting to playlist dir.')
     parser.add_argument('--log-level',
                         dest='loglevel',
