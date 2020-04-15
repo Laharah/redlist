@@ -7,6 +7,7 @@ from fuzzywuzzy import fuzz
 import beets.library
 
 import redlist.playlist as pl
+from redlist.matching import TrackInfo
 
 MUSIC = Path('lounge')
 SPOTLIST = Path('test/txtpl.txt')
@@ -33,3 +34,18 @@ def test_create_info_from_m3u(tmp_path):
     out = tmp_path / 'tmp'
     pl.create_m3u_from_info(matches, out)
     assert Path(M3U).read_text() == out.read_text()
+
+
+def test_parse_track_info_string():
+    t = TrackInfo(artist='Daft Punk',
+                  title='Solar Sailer',
+                  album="TRON's, Legacy",
+                  length=162.12,
+                  spotify_id='0Jc2SfIHv63JNsUZpunh54')
+    old = pl.parse_track_info_string(
+        """# TrackInfo(artist='Daft Punk', title='Solar Sailer', album="TRON's, Legacy", length=162.12, spotify_id='0Jc2SfIHv63JNsUZpunh54')"""
+    )
+    new = pl.parse_track_info_string(
+        """# TrackInfo(json='{"artist": "Daft Punk", "title": "Solar Sailer", "album": "TRON\'s, Legacy", "length": 162.12, "spotify_id": "0Jc2SfIHv63JNsUZpunh54"}')"""
+    )
+    assert t.json() == new.json()

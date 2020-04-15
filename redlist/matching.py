@@ -1,5 +1,6 @@
 import re
 import shlex
+import json
 import logging
 from collections import OrderedDict
 from itertools import zip_longest
@@ -10,6 +11,7 @@ from beets import config as beetconfig
 VA_ARTISTS = '', 'various artists', 'various', 'va', 'unknown'
 
 log = logging.getLogger(__name__)
+
 
 class TrackInfo:
     """
@@ -24,6 +26,9 @@ class TrackInfo:
     All other keyword arguments will be stored as attributes.
     """
     def __init__(self, *args, **kwargs):
+        if 'json' in kwargs:
+            kwargs = json.loads(kwargs['json'])
+            args = []
         arg_order = ['artist', 'title', 'album', 'length']
         self.fields = []
         for k, v in zip_longest(arg_order, args):
@@ -92,6 +97,9 @@ class TrackInfo:
         kwargs['length'] = track['duration_ms'] / 1000
         kwargs['spotify_id'] = track['id']
         return cls(**kwargs)
+
+    def json(self):
+        return json.dumps({f: self.__getattribute__(f) for f in self.fields})
 
     def __str__(self):
         return f'{self.artist}{" - "+self.album if self.album else ""} - {self.title}'

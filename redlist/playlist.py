@@ -52,8 +52,8 @@ def create_m3u_from_info(track_infos, output: Path, url=None):
             except AttributeError:
                 if isinstance(track, str):
                     fout.write(track.encode('utf8'))
-                else:
-                    fout.write(b'# ' + repr(track).encode('utf8'))
+                elif isinstance(track, TrackInfo):
+                    fout.write(b'# TrackInfo(json=\'\'\'%s\'\'\')'%track.json().encode('utf8'))
             fout.write(b'\n')
 
 
@@ -99,6 +99,11 @@ def parse_spotfiy_id(address):
     return match.group(1) if match else None
 
 def parse_track_info_string(line):
+    # Try extracting json first
+    m = re.search(r'json=[\'|\"]{1,3}(.+?)[\'\"]{1,3}\)$', line)
+    if m:
+        return TrackInfo(json=m.group(1))
+    # Old (incorrect) style. Must keep for compatibility
     kwargs = {}
     line = re.search(r'TrackInfo\((.*)\)', line).group(1)
     args = re.findall(r'[\w|_].+?\=[\',\"]?.*?[\d|\'|\"]\,', line)
