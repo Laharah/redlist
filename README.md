@@ -15,27 +15,35 @@ To install simply run:
 
 ## Usage
 ```
-Usage: redlist [options] <playlist>...
+usage: redlist [options] <playlist>...
 
-Options:
+Save spotify playlists as m3u and fill in missing songs from [REDACTED]
+
+positional arguments:
+  playlist
+
+optional arguments:
   -h, --help            show this help message and exit
-  --config=CONFIGFILE   Path to configuration file.
-  --beets-library=BEETS_LIBRARY
+  --config CONFIGFILE   Path to configuration file.
+  --beets-library BEETS_LIBRARY
                         The beets library to use
-  --downloads=TORRENT_DIRECTORY
+  --downloads TORRENT_DIRECTORY
                         Directory new torrents will be saved to (exclusive
                         with --deluge)
   -y                    Assume yes to all queries and do not prompt.
   --deluge              Load torrents directly into deluge
-  --deluge-server=DELUGE.HOST
+  --deluge-server DELUGE.HOST
                         address of deluge server, (Default: localhost)
-  --deluge-port=DELUGE.PORT
+  --deluge-port DELUGE.PORT
                         Port of deluge server, (Default: 58846)
   --restrict-album      Only match tracks if they come from the same album.
-  --use-fl-tokens       Use freeleach tokens
-  --show-config         Dump the current configuration values.
+  --use-fl-tokens       Use freeleach tokens (note: slows torrent download
+                        SIGNIFICANTLY).
+  --show-config         Dump the current configuration values and exit.
   --overwrite-m3u       if argument is an m3u, overwrite it instead of
                         outputting to playlist dir.
+  --log-level {CRITICAL,ERROR,WARNING,INFO,DEBUG}
+                        Set the log level. (Default: INFO)
 ```
 
 Where playlist is a Spotify playlist (uri or url), an m3u, or a csv file (artist, title, album). 
