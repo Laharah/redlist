@@ -129,14 +129,30 @@ async def main(spotlist, yes=False):
         print('\nWould you like to download the torrents for these albums?:')
     else:
         print('\nDownloading the following torrents:')
-    for torrent in downloads.values():
-        m = '{} - {} [{}][{} {}]: torrentid={}'.format(
-            *[torrent[k] for k in ('artist', 'groupName')] +
-            [torrent['torrent'][k] for k in 'media format encoding'.split()] +
-            [torrent['torrent']['torrentId']])
-        print('\t', m)
-    if not yes and not re.match('y', input('(Yes/No)'), re.I):
-        return 0
+    y = False
+    while not y:  # Prompt for editing
+        for torrent in downloads.values():
+            m = '{} - {} [{}][{} {}]: torrentid={}'.format(
+                *[torrent[k] for k in ('artist', 'groupName')] +
+                [torrent['torrent'][k] for k in 'media format encoding'.split()] +
+                [torrent['torrent']['torrentId']])
+            print('\t', m)
+        inpt = '' if not yes else 'y'
+        while not inpt:
+            try:
+                inpt = input('(Yes/No/Edit)').lower()[0]
+            except IndexError:
+                continue
+            if inpt not in 'yne':
+                inpt = ''
+        if inpt == 'n':
+            return 0
+        if inpt == 'y':
+            y = True
+        if inpt == 'e':
+            downloads = ui.edit_torrent_downloads(downloads)
+
+    # get estimated buffer
     try:
         new_buff = await utils.check_dl_buffer(downloads.values(), api)
     except utils.NotEnoughDownloadBuffer as e:

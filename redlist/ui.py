@@ -1,6 +1,10 @@
 from pynentry import PynEntry
 from getpass import getpass
 import logging
+import os
+import subprocess
+import tempfile
+import re
 
 from . import config
 
@@ -57,3 +61,33 @@ def get_spotify_auth_code(auth_url):
            'Paste the url you are redirected to here (it contains your access code).')
     print(msg)
     return input('url: ')
+
+
+def user_editor(original_data):
+    with tempfile.NamedTemporaryFile(delete=False) as tf:
+        tf.write(original_data.encode('utf8'))
+        tf.flush()
+    editor = os.getenv('EDITOR')
+    try:
+        if editor:
+            subprocess.call([editor, tf.name])
+        else:
+            log.error("You must set the EDITOR environment variable to use this feature.")
+    finally:
+        with open(tf.name) as f:
+            edited = f.read()
+        os.unlink(tf.name)
+    return edited
+
+def edit_torrent_downloads(downloads):
+    prompt = ["#remove any torrentid's you don't want downloaded." '\n']
+    for torrent in downloads.values():
+        m = '{} - {} [{}][{} {}]: torrentid={}'.format(
+            *[torrent[k] for k in ('artist', 'groupName')] +
+            [torrent['torrent'][k] for k in 'media format encoding'.split()] +
+            [torrent['torrent']['torrentId']])
+        prompt.append(m)
+    response = user_editor('\n'.join(prompt))
+    ids = set(map(int, re.findall('torrentid=(.+)$', response)))
+    downloads = {t: v for t, v in downloads.items() if v['torrent']['torrentId'] in ids}
+    return downloads
