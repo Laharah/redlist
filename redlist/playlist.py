@@ -53,7 +53,8 @@ def create_m3u_from_info(track_infos, output: Path, url=None):
                 if isinstance(track, str):
                     fout.write(track.encode('utf8'))
                 elif isinstance(track, TrackInfo):
-                    fout.write(b'# TrackInfo(json=\'\'\'%s\'\'\')'%track.json().encode('utf8'))
+                    fout.write(b'# TrackInfo(json=\'\'\'%s\'\'\')' %
+                               track.json().encode('utf8'))
             fout.write(b'\n')
 
 
@@ -93,10 +94,12 @@ async def parse_playlist(argument, library):
     log.info('Reading in csv file %s.', f.stem)
     return f.stem, get_sp_data(f)
 
+
 def parse_spotfiy_id(address):
     "Return the playlist id if it's a spotify playlist. Otherwise return False"
     match = re.match(r'.*spotify.*[:/]playlist[:/]([\w\d]+)', address)
     return match.group(1) if match else None
+
 
 def parse_track_info_string(line):
     # Try extracting json first
@@ -117,4 +120,3 @@ def parse_track_info_string(line):
         else:
             kwargs[k] = v.strip('\'"')
     return TrackInfo(**kwargs)
-
