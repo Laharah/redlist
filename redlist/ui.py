@@ -88,6 +88,6 @@ def edit_torrent_downloads(downloads):
             [torrent['torrent']['torrentId']])
         prompt.append(m)
     response = user_editor('\n'.join(prompt))
-    ids = set(map(int, re.findall('torrentid=(.+)$', response)))
+    ids = set(map(int, re.findall('torrentid=(\d+)', response)))
     downloads = {t: v for t, v in downloads.items() if v['torrent']['torrentId'] in ids}
     return downloads
