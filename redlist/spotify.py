@@ -112,6 +112,7 @@ class SpotifyAccessToken:
         await self.refresh()
 
     async def gen_new(self):
+        log.debug('Attempting to generate new auth token.')
         redirect = ui.get_spotify_auth_code(generate_auth_url())
         code = parse_resp_code(redirect)
 
@@ -141,6 +142,6 @@ class SpotifyAccessToken:
                 token_info = await resp.json()
         token_info['expires_at'] = int(time.time()) + token_info['expires_in']
         self.token_info.update(token_info)
-        self.save()
         log.debug('Spotify token successfully refreshed.')
+        self.save()
         return token_info
