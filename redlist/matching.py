@@ -62,6 +62,7 @@ class TrackInfo:
                 self.feat = m.groups()[-1]
                 self.__setattr__(f, m.group(1))
                 self.fields.append('feat')
+                log.debug('Cleaned featured artist %s from %s field.', self.feat, f)
 
     def convert_length(self):
         if not self.length:

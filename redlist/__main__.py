@@ -41,6 +41,7 @@ async def main(spotlist, yes=False):
 
     # Parse the playlist
     title, track_info = await playlist.parse_playlist(spotlist, library)
+    log.info('Successfully parsed playlist "%s".', title)
     # Match exsisting tracks
     log.info('Matching track list to beets library...')
     matched = matching.beets_match(track_info, library, config['restrict_album'].get())
@@ -76,7 +77,7 @@ async def main(spotlist, yes=False):
     try:
         api = await utils.get_api()
     except PinEntryCancelled:
-        print("Search Canceled, writing and exiting.")
+        print("Search Canceled.")
         return 0
     log.info('SUCCESS!')
     log.info('Begining search for %s tracks, This may take a while.', len(unmatched))
@@ -163,7 +164,11 @@ async def main(spotlist, yes=False):
         print(f"After download your new buffer will be "
               f"{humanize.naturalsize(new_buff, gnu=True)}")
 
-    use_fl = config['redacted']['use_fl_tokens']
+    use_fl = config['redacted']['use_fl_tokens'].get()
+    if use_fl:
+        log.info('Downloading multiple torrents with FL tokens is SLOW, '
+                 'expect this to take a while.')
+
     if config['enable_deluge'].get():
         try:
             with deluge.Client() as client:
@@ -175,7 +180,7 @@ async def main(spotlist, yes=False):
                     try:
                         client.add_torrent_file(filename, data, paused)
                     except ValueError:
-                        log.error('Could not download torrent %s.',
+                        log.error('Could not add torrent %s to deluge.',
                                   torrent['torrent']['torrentId'])
 
                 dls = [
@@ -194,7 +199,11 @@ async def main(spotlist, yes=False):
     # Download to files
     async def dl_torrent(torrent):
         dl_dir = config['torrent_directory'].as_filename()
-        filename, data = await api.get_torrent(torrent['torrent']['torrentId'], use_fl)
+        try:
+            filename, data = await api.get_torrent(torrent['torrent']['torrentId'], use_fl)
+        except ValueError:
+            log.error('Could not download torrent %s.', torrent['torrent']['torrentId'])
+            return
         with open(Path(dl_dir) / filename, 'wb') as fout:
             fout.write(data)
         log.info('Downloaded %s.', filename)
@@ -275,7 +284,7 @@ def entry_point():
     args = options.playlist
     if len(args) < 1:
         parser.error('Must specify at least one playlist')
-    log.setLevel(options.loglevel)
+    log.parent.setLevel(getattr(logging, options.loglevel))
     config.set_args(options, dots=True)
     utils.resolve_configured_paths(config)
     spotlists = args

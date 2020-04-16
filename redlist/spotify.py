@@ -101,6 +101,7 @@ class SpotifyAccessToken:
         config_dir = Path(config.config_dir())
         with open(config_dir / "spotify_token.json", 'w') as fout:
             json.dump(self.token_info, fout)
+            log.debug('Saved new spotify auth token to %s', fout.name)
 
     async def ensure_valid(self):
         if self.is_valid:
@@ -141,4 +142,5 @@ class SpotifyAccessToken:
         token_info['expires_at'] = int(time.time()) + token_info['expires_in']
         self.token_info.update(token_info)
         self.save()
+        log.debug('Spotify token successfully refreshed.')
         return token_info

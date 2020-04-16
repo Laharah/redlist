@@ -135,8 +135,9 @@ class RedAPI:
             expected = 'application/x-bittorrent; charset=utf-8'
             if response.headers['content-type'] != expected:
                 log.error(response.headers)
-                body = await response.content.read()
-                log.error(body)
+                if log.getEffectiveLevel() <= logging.DEBUG:
+                    body = await response.content.read()
+                    log.debug(body)
                 raise ValueError("Wrong content-type: {}".format(
                     response.headers['content-type']))
             match = re.search(r'filename="(.+)"', response.headers['content-disposition'])
