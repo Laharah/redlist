@@ -14,6 +14,7 @@ log.setLevel('INFO')
 
 
 def make_search_dict(track_info):
+    "Construct the fields necessary for searching redacted for a given track"
     d = {}
     d['filelist'] = track_info.title
     if track_info.artist and track_info.artist.lower not in matching.VA_ARTISTS:
@@ -39,7 +40,7 @@ async def find_album(track_info, api: RedAPI, restrict_album=True):
         log.critical("%s", res)
         raise
     if len(res['results']) == 1:
-        log.info('hit on first try for %s', track_info)
+        log.info('Hit on first try for %s.', track_info)
         group = res['results'][0]
         prefs = [
             re.compile(p, re.I) for p in config['redacted']['format_preferences'].get()

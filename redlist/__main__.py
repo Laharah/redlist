@@ -203,6 +203,7 @@ async def main(spotlist, yes=False):
             filename, data = await api.get_torrent(torrent['torrent']['torrentId'], use_fl)
         except ValueError:
             log.error('Could not download torrent %s.', torrent['torrent']['torrentId'])
+            log.debug('Error details', exc_info=True)
             return
         with open(Path(dl_dir) / filename, 'wb') as fout:
             fout.write(data)

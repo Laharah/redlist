@@ -38,25 +38,27 @@ async def fetch_play_list_data(playlist_id, token=None):
         await token.ensure_valid()
 
     url = f'https://api.spotify.com/v1/playlists/{playlist_id}'
-    tracks = {'next': url}
+    data = {'next': url}
     name = playlist_id
-    items = []
+    tracks = []
     async with aiohttp.ClientSession(headers=token.auth_header) as session:
-        while tracks['next']:
-            async with session.get(tracks['next']) as resp:
+        while data['next']:
+            async with session.get(data['next']) as resp:
                 if resp.status == 429:  # Rate limit exceded
                     await asyncio.sleep(resp.headers['Retry-After']+1)
                     continue
                 json = await resp.json()
             try:  # First iteration
-                tracks = json['tracks']
+                data = json['tracks']
                 name = json['name']
-            except KeyError:  # more than 100 tracks
-                tracks = json
-            items.extend(matching.TrackInfo.from_spotify(t) for t in tracks['items'])
+            except KeyError:  # more than 100 data
+                log.debug('Fetching more playlist tracks from Spotify.')
+                data = json
+            tracks.extend(matching.TrackInfo.from_spotify(t) for t in data['items'])
+            log.debug('%s tracks Fetched from playlist.', len(tracks))
     name = re.sub(r'[\\/]', '_', name)
     name = sanitize_path(name)
-    return name, items
+    return name, tracks
 
 
 def generate_auth_url():

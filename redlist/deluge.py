@@ -32,6 +32,7 @@ class Client:
             log.info('Connected to %s:%d', self._client.host, self._client.port)
         except ConnectionRefusedError:
             log.error('Could not connect to deluge server at %s', self._client.host)
+            log.debug('Error Details:', exc_info=True)
             raise
 
     def add_torrent_file(self, filename, data, paused=False):
@@ -44,9 +45,11 @@ class Client:
                 res = None
             else:
                 log.error('Problem Adding torrent %s.', filename, exc_info=True)
+                log.debug('Error details', exc_info=True)
                 return None
         if res is None:
             log.error('Problem when adding torrent %s, it may already exsist.', filename)
+            log.debug('Error details:', exc_info=True)
         else:
             log.info('Added torrent %s with hash %s.', filename, res)
         return res
