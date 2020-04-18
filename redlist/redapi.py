@@ -33,7 +33,7 @@ class TokenBucket():
 
     @tokens.setter
     def tokens(self, value):
-       self._tokens = value
+        self._tokens = value
 
     async def get(self):
         while self.tokens < 1:
@@ -81,16 +81,20 @@ headers = {
 
 
 class RedAPI:
-    def __init__(self, user=None, server="https://redacted.ch", cookies=None):
-        self.session = RateLimitedSession(4, 4 / 11, headers=headers)
-        if cookies:
+    def __init__(self, user=None, host="https://redacted.ch", cookies=None, api_key=None):
+        self.headers = {k: v for k, v in headers.items()}
+        self.api_key = api_key
+        if api_key:
+            self.headers['Authorization'] = api_key
+        self.session = RateLimitedSession(4, 4 / 11, headers=self.headers)
+        if cookies and not api_key:
             self.session.cookie_jar.load(cookies)
         self.authed = False
         self.username = user
         self.authkey = None
         self.passkey = None
-        self.server = server
-        self.fl_bucket = TokenBucket(1, 1/70)
+        self.host = host
+        self.fl_bucket = TokenBucket(1, 1 / 70)
 
     async def _auth(self):
         "Get authkey from server, must always be done after login or first connection"
@@ -98,6 +102,8 @@ class RedAPI:
             accountinfo = await self.request("index")
         except aiohttp.client_exceptions.ContentTypeError as e:
             raise LoginException(e.data) from e
+        if accountinfo['status'] != 'success':
+            raise LoginException(str(accountinfo))
         self.authkey = accountinfo["response"]["authkey"]
         self.passkey = accountinfo["response"]["passkey"]
         self.user_id = accountinfo["response"]["id"]
@@ -106,7 +112,7 @@ class RedAPI:
 
     async def login(self, password, username=None):
         if username: self.username = username
-        loginpage = self.server + '/login.php'
+        loginpage = self.host + '/login.php'
         data = {
             'username': self.username,
             'password': password,
@@ -119,13 +125,15 @@ class RedAPI:
 
     async def get_torrent(self, torrent_id, use_fl=False):
         "Download the torrent at torrent_id -> (filename, data)"
-        torrentpage = self.server + '/torrents.php'
         params = {
             'action': 'download',
             'id': torrent_id,
-            'authkey': self.authkey,
-            'torrent_pass': self.passkey
         }
+        if self.api_key:
+            torrentpage = self.host + '/ajax.php'
+        else:
+            torrentpage = self.host + '/torrents.php'
+            params.update({'authkey': self.authkey, 'torrent_pass': self.passkey})
         if use_fl:
             await self.fl_bucket.get()
             params['usetoken'] = '1'
@@ -146,9 +154,9 @@ class RedAPI:
 
     async def request(self, action, **kwargs):
         "Make an AJAX request for a given action"
-        ajaxpage = self.server + '/ajax.php'
+        ajaxpage = self.host + '/ajax.php'
         params = {'action': action}
-        if self.authkey:
+        if self.authkey and not self.api_key:
             params['auth'] = self.authkey
         params.update(kwargs)
 

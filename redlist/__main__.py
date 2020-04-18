@@ -200,7 +200,8 @@ async def main(spotlist, yes=False):
     async def dl_torrent(torrent):
         dl_dir = config['torrent_directory'].as_filename()
         try:
-            filename, data = await api.get_torrent(torrent['torrent']['torrentId'], use_fl)
+            filename, data = await api.get_torrent(torrent['torrent']['torrentId'],
+                                                   use_fl)
         except ValueError:
             log.error('Could not download torrent %s.', torrent['torrent']['torrentId'])
             log.debug('Error details', exc_info=True)
@@ -224,10 +225,10 @@ def entry_point():
     parser.add_argument("--beets-library",
                         dest='beets_library',
                         help="The beets library to use")
-    parser.add_argument(
-        '--downloads',
-        dest='torrent_directory',
-        help="Directory new torrents will be saved to (exclusive with --deluge)")
+    parser.add_argument('--downloads',
+                        dest='torrent_directory',
+                        help=("Directory new torrents will be saved to "
+                              "(exclusive with --deluge)"))
     parser.add_argument('-y',
                         dest='yes',
                         action='store_true',
@@ -258,12 +259,16 @@ def entry_point():
                         dest='show_config',
                         action='store_true',
                         help="Dump the current configuration values and exit.")
-    parser.add_argument(
-        '--overwrite-m3u',
-        dest='overwrite_m3u',
-        action='store_const',
-        const=True,
-        help='if argument is an m3u, overwrite it instead of outputting to playlist dir.')
+    parser.add_argument('--overwrite-m3u',
+                        dest='overwrite_m3u',
+                        action='store_const',
+                        const=True,
+                        help=('If argument is an m3u, overwrite it '
+                              'instead of outputting to playlist dir.'))
+    parser.add_argument('--no-redact',
+                        dest='redact',
+                        action='store_false',
+                        help='Do not redact sensitve information when showing config.')
     parser.add_argument('--log-level',
                         dest='loglevel',
                         help='Set the log level. (Default: INFO)',
@@ -280,7 +285,7 @@ def entry_point():
         utils.resolve_configured_paths(config)
         print('# Configuration file at "{}"\n'.format(
             os.path.join(config.config_dir(), 'config.yaml')))
-        print(config.dump(redact=True))
+        print(config.dump(redact=options.redact))
         sys.exit()
     args = options.playlist
     if len(args) < 1:

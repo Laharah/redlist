@@ -1,5 +1,6 @@
 import sys
 import os
+import logging
 from pathlib import Path
 
 import humanize
@@ -10,6 +11,7 @@ from . import ui
 from . import redapi
 
 API = None
+log = logging.getLogger(__name__)
 
 
 class NotEnoughDownloadBuffer(Exception):
@@ -53,21 +55,24 @@ async def get_api():
     if API is not None and not API.session.closed:
         return API
     cfg = config['redacted']
-    if cfg['save_cookies']:
+    api_key = cfg['api_key'].get()
+    if cfg['save_cookies'] and not api_key:
         cookies = Path(config.config_dir()) / 'cookies.dat'
         if not cookies.exists():
             cookies = None
     else:
         cookies = None
-    api = redapi.RedAPI(cookies=cookies)
-    if cookies:
+    api = redapi.RedAPI(cookies=cookies, api_key=api_key)
+    if cookies or api_key:
         try:
             await api._auth()
         except redapi.LoginException:
-            pass
+            log.debug('Exception while logging in.', exc_info=True)
         else:
             API = api
             return api
+    if api_key:  # Our api key didn't work
+        log.error("[REDACTED] provided API key was not valid! Falling back to user/pass.")
     error = None
     while not (cfg['username'] and cfg['password'] and api.authkey):
         ui.get_user_and_pass(cfg,

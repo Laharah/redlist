@@ -13,6 +13,7 @@ sensitive = [
     config['deluge']['password'],
     config['redacted']['username'],
     config['redacted']['password'],
+    config['redacted']['api_key'],
 ]
 
 for key in sensitive:

@@ -59,11 +59,26 @@ previously missing files.
 
 ## Security
 
-[RED]list does not store your password (unless you enter them into your config). It does
-however store a cookie from [REDACTED] to keep you logged in. This can be disabled in your
-configuration file.
+The First time you run [RED]list you will be prompted to grant it access to both Spotify
+and [REDACTED].
 
-The first time you give [RED]list a Spotify url, you will have to grant [RED]list access
+### [REDACTED]
+
+It is recommended that you generate and use an API key for [REDACTED] access.  To generate
+an API Key for [RED]list to use, go to [REDACTED] > User Settings > API Keys. Then copy
+the generated key and add it into your config file (see below). DO NOT LOSE THIS KEY.
+Check the 'Confirm API Key' box and then press save profile. Once a key is confirmed it
+can be used, but cannot be recovered.  You will have to make a new key if you lose this
+one. [RED]list only requires the User and Torrents API scopes. Feel free to disable other
+API scopes.
+
+If using password authentication, [RED]list will not store your username or password
+(unless you enter them into your config). It will however store a cookie from [REDACTED]
+to keep you logged in. This can be disabled in your configuration file.
+
+### Spotify
+
+The first time you give [RED]list a Spotify url, you will have to grant it access
 to read your playlists, even if the playlist is public. This involves visiting a Spotify
 link [RED]list gives you and pasting back the (broken) URL Spotify sends you to. This URL
 contains an access code for [RED]list to poll the Spotify API. It does not grant [RED]list
@@ -83,11 +98,12 @@ restrict_album: no 			# Only allow tracks to match if they are from the same alb
 overwrite_m3u: no 			# If argument is m3u, overwrite it instead of saving to m3u_dir
 
 redacted:
+  api_key: null 			# Preferred method. Go to User Settings > API Keys and confirm a new key.
   username: null
   password: null
   save_cookies: yes
-  use_fl_tokens: no  	# Use freeleach tokens 
-  format_preferences:  	# "Format Encoding Media"
+  use_fl_tokens: no  		# Use freeleach tokens 
+  format_preferences:  		# "Format Encoding Media"
     - 'MP3 V0'
     - 'MP3 320'
     - 'FLAC .*'
@@ -121,6 +137,7 @@ enable_deluge: yes
 deluge:
     host: example.com
 redacted:
+	api_key: 7******f.7******************************5
     format_preferences:
         - 'FLAC .* (CD|Vinyl)'
         - 'FLAC (lossless|24bit Lossless)'

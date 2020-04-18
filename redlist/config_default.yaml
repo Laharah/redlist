@@ -7,6 +7,7 @@ restrict_album: no
 overwrite_m3u: no
 
 redacted:
+  api_key: null
   username: null
   password: null
   save_cookies: yes
