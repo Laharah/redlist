@@ -40,8 +40,10 @@ optional arguments:
   --use-fl-tokens       Use freeleach tokens (note: slows torrent download
                         SIGNIFICANTLY).
   --show-config         Dump the current configuration values and exit.
-  --overwrite-m3u       if argument is an m3u, overwrite it instead of
+  --overwrite-m3u       If argument is an m3u, overwrite it instead of
                         outputting to playlist dir.
+  --no-redact           Do not redact sensitve information when showing
+                        config.
   --log-level {CRITICAL,ERROR,WARNING,INFO,DEBUG}
                         Set the log level. (Default: INFO)
 ```
@@ -102,7 +104,7 @@ redacted:
   username: null
   password: null
   save_cookies: yes
-  use_fl_tokens: no  		# Use freeleach tokens 
+  use_fl_tokens: no  		# Use freeleach tokens (slows downloads SIGNIFICANTLY)
   format_preferences:  		# "Format Encoding Media"
     - 'MP3 V0'
     - 'MP3 320'
@@ -137,7 +139,7 @@ enable_deluge: yes
 deluge:
     host: example.com
 redacted:
-	api_key: 7******f.7******************************5
+    api_key: 7******f.7******************************5
     format_preferences:
         - 'FLAC .* (CD|Vinyl)'
         - 'FLAC (lossless|24bit Lossless)'
