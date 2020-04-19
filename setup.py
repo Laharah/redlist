@@ -14,7 +14,6 @@ setup(
     install_requires=[
         'aiohttp[speedups]',
         'beets',
-        'python-Levenshtein',
         'humanize',
         'confuse',
         'pynentry',
