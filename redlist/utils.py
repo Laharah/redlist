@@ -50,7 +50,7 @@ async def check_dl_buffer(new_torrent_groups, api):
 
 
 async def get_api():
-    'get a redacted api handle, through config or user'
+    'get a redacted api handle, through config or user. Factory, re-uses connection.'
     global API
     if API is not None and not API.session.closed:
         return API

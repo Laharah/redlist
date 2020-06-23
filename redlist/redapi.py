@@ -161,12 +161,20 @@ class RedAPI:
         params.update(kwargs)
 
         async with await self.session.get(ajaxpage, params=params) as response:
-            try:
-                res = await response.json()
-            except aiohttp.client_exceptions.ContentTypeError as e:
+            for i in range(3):
                 try:
-                    res = json.loads(await response.text())
-                except json.JSONDecodeError:
-                    e.data = await response.text()
-                    raise e
+                    res = await response.json()
+                except aiohttp.client_exceptions.ContentTypeError as e:
+                    try:
+                        res = json.loads(await response.text())
+                    except json.JSONDecodeError:
+                        e.data = await response.text()
+                        raise e
+                except aiohttp.client_exceptions.ClientPayloadError:
+                    if i == 2:
+                        log.critical('Too many payload errors. Aborting.')
+                        raise
+                    log.error('Payload error while reading response, retrying.')
+                else:
+                    break
         return res
