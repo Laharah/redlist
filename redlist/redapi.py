@@ -160,8 +160,8 @@ class RedAPI:
             params['auth'] = self.authkey
         params.update(kwargs)
 
-        async with await self.session.get(ajaxpage, params=params) as response:
-            for i in range(3):
+        for i in range(3):
+            async with await self.session.get(ajaxpage, params=params) as response:
                 try:
                     res = await response.json()
                 except aiohttp.client_exceptions.ContentTypeError as e:
@@ -175,6 +175,8 @@ class RedAPI:
                         log.critical('Too many payload errors. Aborting.')
                         raise
                     log.error('Payload error while reading response, retrying.')
+                    log.debug('Request to %s with params %s', ajaxpage, params)
+                    await asyncio.sleep(3)
                 else:
                     break
         return res

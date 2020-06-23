@@ -2,6 +2,7 @@ __doc__ = """Save spotify playlists as m3u and fill in missing songs from [REDAC
 from collections import OrderedDict
 import humanize
 import asyncio
+import aiohttp
 import sys
 from pathlib import Path
 import logging
@@ -86,7 +87,8 @@ async def main(spotlist, yes=False):
         ra = config['restrict_album'].get()
         try:
             return await redsearch.find_album(track, api, restrict_album=ra)
-        except (RuntimeError, ValueError, KeyError) as e:
+        except (RuntimeError, ValueError, KeyError,
+                aiohttp.client_exceptions.ClientPayloadError) as e:
             log.error('Error while searching for track %s.', track)
             log.debug('Stack Trace:', exc_info=True)
             return None
