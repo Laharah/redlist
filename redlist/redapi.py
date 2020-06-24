@@ -170,10 +170,10 @@ class RedAPI:
                     except json.JSONDecodeError:
                         e.data = await response.text()
                         raise e
-                except aiohttp.client_exceptions.ClientPayloadError:
+                except aiohttp.client_exceptions.ClientPayloadError as e:
                     if i == 2:
                         log.critical('Too many payload errors. Aborting.')
-                        raise
+                        raise RuntimeError('Could not read json payload') from e
                     log.error('Payload error while reading response, retrying.')
                     log.debug('Request to %s with params %s', ajaxpage, params)
                     await asyncio.sleep(3)
