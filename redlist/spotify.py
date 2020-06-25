@@ -15,6 +15,7 @@ from beets.util import sanitize_path
 from . import config
 from . import ui
 from . import matching
+from . import utils
 
 log = logging.getLogger(__name__)
 
@@ -45,7 +46,7 @@ async def fetch_play_list_data(playlist_id, token=None):
         while data['next']:
             async with session.get(data['next']) as resp:
                 if resp.status == 429:  # Rate limit exceded
-                    await asyncio.sleep(resp.headers['Retry-After']+1)
+                    await asyncio.sleep(resp.headers['Retry-After'] + 1)
                     continue
                 json = await resp.json()
             try:  # First iteration
@@ -59,6 +60,29 @@ async def fetch_play_list_data(playlist_id, token=None):
     name = re.sub(r'[\\/]', '_', name)
     name = sanitize_path(name)
     return name, tracks
+
+
+async def fetch_track_data(*ids, token=None):
+    'Get track data from given spotify trackids'
+    if token is None:
+        token = SpotifyAccessToken()
+        await token.ensure_valid()
+
+    url = 'https://api.spotify.com/v1/tracks'
+    data = []
+    async with aiohttp.ClientSession(headers=token.auth_header) as session:
+        for tracks in utils.chunk(ids, 50):
+            params = {'ids': ','.join(tracks)}
+            while True:
+                async with session.get(url, params=params) as resp:
+                    if resp.status == 429:
+                        log.debug('Rate limit exceded, waiting...')
+                        await asyncio.sleep(resp.headers['Retry-After'] + 1)
+                        continue
+                    json = await resp.json()
+                    data.extend(json['tracks'])
+                    break
+    return data
 
 
 def generate_auth_url():
