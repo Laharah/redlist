@@ -13,6 +13,7 @@ from . import redapi
 
 API = None
 log = logging.getLogger(__name__)
+USER_BUFFER = None
 
 
 class NotEnoughDownloadBuffer(Exception):
@@ -37,15 +38,19 @@ def resolve_configured_paths(cfg):
     cfg.set_args(paths)
 
 
-async def check_dl_buffer(new_torrent_groups, api):
-    user_data = await api.request('user', id=api.user_id)
-    user_data = user_data['response']
-    buff = user_data['stats']['buffer']
+async def check_dl_buffer(new_torrent_groups, api, cache=True):
+    global USER_BUFFER
+    buff = USER_BUFFER
+    if not USER_BUFFER or not cache:
+        user_data = await api.request('user', id=api.user_id)
+        user_data = user_data['response']
+        buff = user_data['stats']['buffer']
+        USER_BUFFER = buff
     new_dl = sum(g['torrent']['size'] for g in new_torrent_groups)
     new_buff = buff - new_dl
     if new_buff <= 0:
         raise NotEnoughDownloadBuffer(
-            f"Downloading {len(new_torrent_groups)} torrents will exceted your"
+            f"Downloading these {len(new_torrent_groups)} torrents will exceted your"
             f"download buffer by {humanize.naturalsize(-new_buff, gnu=True)}!")
     return new_buff
 

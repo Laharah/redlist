@@ -138,6 +138,17 @@ async def main(spotlist, yes=False):
                 [torrent['torrent'][k] for k in 'media format encoding'.split()] +
                 [torrent['torrent']['torrentId']])
             print('\t', m)
+        # get estimated buffer
+        try:
+            new_buff = await utils.check_dl_buffer(downloads.values(), api)
+        except utils.NotEnoughDownloadBuffer as e:
+            log.critical("%s", e.args[0])
+            if not yes and not re.match('y', input('Continue?: '), re.I):
+                return 0
+        else:
+            print(f"After download your new buffer will be "
+                  f"{humanize.naturalsize(new_buff, gnu=True)}")
+
         inpt = '' if not yes else 'y'
         while not inpt:
             try:
@@ -153,16 +164,6 @@ async def main(spotlist, yes=False):
         if inpt == 'e':
             downloads = ui.edit_torrent_downloads(downloads)
 
-    # get estimated buffer
-    try:
-        new_buff = await utils.check_dl_buffer(downloads.values(), api)
-    except utils.NotEnoughDownloadBuffer as e:
-        log.critical("%s", e.args[0])
-        if not yes and not re.match('y', input('Continue?: '), re.I):
-            return 0
-    else:
-        print(f"After download your new buffer will be "
-              f"{humanize.naturalsize(new_buff, gnu=True)}")
 
     use_fl = config['redacted']['use_fl_tokens'].get()
     if use_fl:
