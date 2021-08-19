@@ -5,6 +5,7 @@ torrent_directory: null
 m3u_directory: null
 restrict_album: no
 overwrite_m3u: no
+missing_track_playlist: null
 
 redacted:
   api_key: null

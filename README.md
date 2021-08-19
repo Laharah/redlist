@@ -80,12 +80,13 @@ to keep you logged in. This can be disabled in your configuration file.
 
 ### Spotify
 
-The first time you give [RED]list a Spotify url, you will have to grant it access
-to read your playlists, even if the playlist is public. This involves visiting a Spotify
-link [RED]list gives you and pasting back the (broken) URL Spotify sends you to. This URL
+The first time you give [RED]list a Spotify url, you will have to grant it access to read
+your playlists, even if the playlist is public. This involves visiting a Spotify link
+[RED]list gives you and pasting back the (broken) URL Spotify sends you to. This URL
 contains an access code for [RED]list to poll the Spotify API. It does not grant [RED]list
-permissions to read anything but your playlists. [RED]list stores this api token in the
-config directory and refreshes and re-uses it for future use.
+permissions to read anything but your playlists.  It also allows redlist to create
+(private) playlists for you (should you want it to). [RED]list stores this api token in
+the config directory and refreshes and re-uses it for future use.
 
 ## Configuration
 
@@ -98,6 +99,8 @@ torrent_directory: null 	# Directory save downloaded torrents
 m3u_directory: null 		# Directory to save processed m3u playlists
 restrict_album: no 			# Only allow tracks to match if they are from the same album
 overwrite_m3u: no 			# If argument is m3u, overwrite it instead of saving to m3u_dir
+missing_track_playlist: null # set to a value to have redlist ask to create a spotify
+playlist of missing tracks
 
 redacted:
   api_key: null 			# Preferred method. Go to User Settings > API Keys and confirm a new key.
@@ -135,6 +138,7 @@ command line with the `--config` option.
 ### Example
 The config uses YAML syntax. An example config might look like so:
 ``` yaml
+missing_track_playlist: prompt
 enable_deluge: yes
 deluge:
     host: example.com
@@ -148,10 +152,14 @@ redacted:
 ```
 
 This will set [RED]list to automatically add torrents to a deluge server running at
-example.com. It also specifies the preferred torrent formats. The preferences are listed
-as regex strings in the preferred order. The regex strings are matched against a string of
-the format `"format encoding media"` eg:(`MP3 V0 (VBR) Web`). The above regex strings can
-be interpreted as such:
+example.com. By setting `missing_track_playlist` [RED]list will prompt the user if they
+want to create a spotify playlist containing tracks that couldn't be found (could be set
+to `yes` to do so automatically). 
+
+It also specifies the preferred torrent formats. The preferences are listed as regex
+strings in the preferred order. The regex strings are matched against a string of the
+format `"format encoding media"` eg:(`MP3 V0 (VBR) Web`).  The above regex strings can be
+interpreted as such:
 
 - `'FLAC .* (CD|Vinyl)'`: Any FLAC from CD or vinyl media.
 - `'FLAC (lossless|24bit Lossless)'`: otherwise, a lossless or 24bit lossless FLAC from any media
