@@ -92,23 +92,22 @@ the config directory and refreshes and re-uses it for future use.
 
 [RED]list has several configuration options. The defaults are shown here:
 ``` yaml
-beets_library: null  		# Usually found automatically
-pinentry: yes  				# Use Pinentry to securely get passwords
-enable_deluge: no 			# Load downloaded torrents into deluge
-torrent_directory: null 	# Directory save downloaded torrents
-m3u_directory: null 		# Directory to save processed m3u playlists
-restrict_album: no 			# Only allow tracks to match if they are from the same album
-overwrite_m3u: no 			# If argument is m3u, overwrite it instead of saving to m3u_dir
-missing_track_playlist: null # set to a value to have redlist ask to create a spotify
-playlist of missing tracks
+beets_library: null          # Usually found automatically
+pinentry: yes                # Use Pinentry to securely get passwords
+enable_deluge: no            # Load downloaded torrents into deluge
+torrent_directory: null      # Directory save downloaded torrents
+m3u_directory: null          # Directory to save processed m3u playlists
+restrict_album: no           # Only allow tracks to match if they are from the same album
+overwrite_m3u: no            # If argument is m3u, overwrite it instead of saving to m3u_dir
+missing_track_playlist: null # set to a value to have redlist ask to create a spotify playlist of missing tracks
 
 redacted:
-  api_key: null 			# Preferred method. Go to User Settings > API Keys and confirm a new key.
+  api_key: null              # Preferred method. Go to User Settings > API Keys and confirm a new key.
   username: null
   password: null
   save_cookies: yes
-  use_fl_tokens: no  		# Use freeleach tokens (slows downloads SIGNIFICANTLY)
-  format_preferences:  		# "Format Encoding Media"
+  use_fl_tokens: no          # Use freeleach tokens (slows downloads SIGNIFICANTLY)
+  format_preferences:        # "Format Encoding Media"
     - 'MP3 V0'
     - 'MP3 320'
     - 'FLAC .*'
