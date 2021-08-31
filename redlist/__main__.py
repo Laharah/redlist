@@ -73,7 +73,8 @@ async def main(spotlist, yes=False):
     print("\n".join(map(str, unmatched)))
 
     # Search [REDACTED] for missing tracks
-    if not yes:
+    redacted_disabled = config["redacted"]["disable"].get()
+    if not yes and not redacted_disabled:
         if not re.match(
             r"y", input("\nSearch [REDACTED] for missing tracks?(y/n): "), flags=re.I
         ):
@@ -91,6 +92,9 @@ async def main(spotlist, yes=False):
             await playlist.make_missing_spotify_playlist(playlist_title, unmatched)
             return 0
 
+    if redacted_disabled:
+        log.info("\nSearching Redacted Disabled.\nFinished!")
+        return 0
     log.info("\nConnecting to [REDACTED]...")
     try:
         api = await utils.get_api()

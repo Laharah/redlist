@@ -102,6 +102,7 @@ overwrite_m3u: no            # If argument is m3u, overwrite it instead of savin
 missing_track_playlist: null # set to a value to have redlist ask to create a spotify playlist of missing tracks
 
 redacted:
+  disable: no                # Disable [REDACTED] search entirely.
   api_key: null              # Preferred method. Go to User Settings > API Keys and confirm a new key.
   username: null
   password: null

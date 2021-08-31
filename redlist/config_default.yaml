@@ -8,6 +8,7 @@ overwrite_m3u: no
 missing_track_playlist: null
 
 redacted:
+  disable: no
   api_key: null
   username: null
   password: null
