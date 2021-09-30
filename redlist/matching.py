@@ -8,6 +8,8 @@ from itertools import zip_longest
 from beets.autotag import hooks as beethooks
 from beets import config as beetconfig
 
+from . import config
+
 VA_ARTISTS = "", "various artists", "various", "va", "unknown"
 
 log = logging.getLogger(__name__)
@@ -157,6 +159,7 @@ def beets_match(track_info, lib, restrict_album=False):
     original = track_info if isinstance(track_info, dict) else None
     if original:
         track_info = [t for t, v in original.items() if v is None]
+    match_threshold = config['beets_match_threshold'].as_number()
     matched = {}
     for t in track_info:
         if not isinstance(t, TrackInfo):
@@ -176,7 +179,7 @@ def beets_match(track_info, lib, restrict_album=False):
             }
 
         best = min(canidates)
-        if best >= 0.3:
+        if best >= match_threshold:
             matched[t] = None
         else:
             matched[t] = canidates[best]

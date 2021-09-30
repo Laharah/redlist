@@ -1,4 +1,5 @@
 beets_library: null
+beets_match_threshold: 0.3
 pinentry: yes
 enable_deluge: no
 torrent_directory: null

@@ -93,6 +93,7 @@ the config directory and refreshes and re-uses it for future use.
 [RED]list has several configuration options. The defaults are shown here:
 ``` yaml
 beets_library: null          # Usually found automatically
+beets_match_threshold: 0.3   # maximum difference between tracks to match (lower is stricter)
 pinentry: yes                # Use Pinentry to securely get passwords
 enable_deluge: no            # Load downloaded torrents into deluge
 torrent_directory: null      # Directory save downloaded torrents
