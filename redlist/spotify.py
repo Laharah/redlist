@@ -5,6 +5,7 @@ import time
 import json
 import logging
 import re
+import pprint
 from cryptography import fernet
 from urllib.parse import urlencode
 from pathlib import Path
@@ -64,7 +65,15 @@ async def fetch_play_list_data(playlist_id, token=None):
             except KeyError:  # more than 100 data
                 log.debug("Fetching more playlist tracks from Spotify.")
                 data = json
-            tracks.extend(matching.TrackInfo.from_spotify(t) for t in data["items"])
+            try:
+                tracks.extend(
+                    matching.TrackInfo.from_spotify(t)
+                    for t in data["items"]
+                    if t["track"] is not None
+                )
+            except matching.MatchingError as e:
+                pprint.pprint(e.data)
+                raise
             log.debug("%s tracks Fetched from playlist.", len(tracks))
     name = re.sub(r"[\\/]", "_", name)
     name = sanitize_path(name)
