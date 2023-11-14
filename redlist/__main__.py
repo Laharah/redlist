@@ -50,7 +50,11 @@ async def main(spotlist, yes=False):
         for track, i in matched.items()
         if i is None and not isinstance(track, str)
     ]
-    log.info("Finished. There are %d tracks that could not be matched.", len(unmatched))
+    log.info(
+        "Finished. There are %d/%d tracks that could not be matched.",
+        len(unmatched),
+        len(track_info),
+    )
     if re.match(r".*\.(m3u|m3u8)$", spotlist) and config["overwrite_m3u"].get():
         save_path = Path(spotlist)
         overwrite_flag = True
