@@ -81,7 +81,7 @@ headers = {
 
 
 class RedAPI:
-    def __init__(self, user=None, host="https://redacted.ch", cookies=None, api_key=None):
+    def __init__(self, user=None, host="https://redacted.sh", cookies=None, api_key=None):
         self.headers = {k: v for k, v in headers.items()}
         self.api_key = api_key
         if api_key:
