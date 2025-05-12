@@ -83,7 +83,7 @@ async def search_redlist_and_dl(unmatched, yes=False):
     # Download torrents
     if not downloads:
         print("No new torrents to download.")
-        return 0
+        return []
     if not yes:
         print("\nWould you like to download the torrents for these albums?:")
     else:
@@ -119,7 +119,7 @@ async def search_redlist_and_dl(unmatched, yes=False):
             if inpt not in "yne":
                 inpt = ""
         if inpt == "n":
-            return missing
+            return unmatched
         if inpt == "y":
             y = True
         if inpt == "e":
@@ -181,6 +181,7 @@ async def download_torrents(downloads):
     if config["enable_deluge"].get():
         try:
             await dl_torrents_to_deluge(downloads, use_fl)
+            return
         except ConnectionRefusedError:
             print("\nThere was an error connecting to the deluge server.")
             print("Saving torrents to files instead.")
