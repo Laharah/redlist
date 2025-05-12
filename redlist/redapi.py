@@ -6,8 +6,13 @@ import json
 import re
 import random
 import logging
+from pathlib import Path
+
+from . import ui
+from . import config
 
 log = logging.getLogger(__name__)
+API = None
 
 
 class LoginException(Exception):
@@ -15,7 +20,7 @@ class LoginException(Exception):
         self.data = data
 
 
-class TokenBucket():
+class TokenBucket:
     def __init__(self, capacity, fill_rate):
         self.rate = fill_rate
         self.capacity = capacity
@@ -58,7 +63,7 @@ with warnings.catch_warnings():
                 except aiohttp.client_exceptions.ServerDisconnectedError:
                     if backoff is None:
                         raise
-                    log.error('ServerDisconnectedError, backing off')
+                    log.error("ServerDisconnectedError, backing off")
                     await asyncio.sleep(backoff + random.random())
 
         async def post(self, *args, **kwargs):
@@ -69,23 +74,71 @@ with warnings.catch_warnings():
                 except aiohttp.client_exceptions.ServerDisconnectedError:
                     if backoff is None:
                         raise
-                    log.error('ServerDisconnectedError, backing off')
+                    log.error("ServerDisconnectedError, backing off")
                     await asyncio.sleep(backoff + random.random())
 
 
 headers = {
-    'Content-type': 'application/x-www-form-urlencoded',
-    'Accept-Charset': 'utf-8',
-    'User-Agent': 'redapi [laharah]'
+    "Content-type": "application/x-www-form-urlencoded",
+    "Accept-Charset": "utf-8",
+    "User-Agent": "redapi [laharah]",
 }
 
 
+async def get_api():
+    """Primary method get a redacted api handle, through config or user\
+     Factory, re-uses connection."""
+    global API
+    if API is not None and not API.session.closed:
+        return API
+    cfg = config["redacted"]
+    api_key = cfg["api_key"].get()
+    if cfg["save_cookies"] and not api_key:
+        cookies = Path(config.config_dir()) / "cookies.dat"
+        if not cookies.exists():
+            cookies = None
+    else:
+        cookies = None
+    api = RedAPI(cookies=cookies, api_key=api_key)
+    if cookies or api_key:
+        try:
+            await api._auth()
+        except LoginException:
+            log.debug("Exception while logging in.", exc_info=True)
+        else:
+            API = api
+            return api
+    if api_key:  # Our api key didn't work
+        log.error(
+            "[REDACTED] provided API key was not valid! Falling back to user/pass."
+        )
+    error = None
+    while not (cfg["username"] and cfg["password"] and api.authkey):
+        ui.get_user_and_pass(
+            cfg, name="[REDACTED]", overwrite=True if error else False, error=error
+        )
+        try:
+            await api.login(cfg["password"], username=cfg["username"])
+        except LoginException:
+            error = "Login failed, please re-enter password"
+            continue
+        if cfg["save_cookies"]:
+            api.session.cookie_jar.save(Path(config.config_dir()) / "cookies.dat")
+        API = api
+        return api
+
+
 class RedAPI:
-    def __init__(self, user=None, host="https://redacted.sh", cookies=None, api_key=None):
+    "Class to handle cals to the [REDACTED] API. \
+    Should not be instantiated directly; instead use get_api()"
+
+    def __init__(
+        self, user=None, host="https://redacted.sh", cookies=None, api_key=None
+    ):
         self.headers = {k: v for k, v in headers.items()}
         self.api_key = api_key
         if api_key:
-            self.headers['Authorization'] = api_key
+            self.headers["Authorization"] = api_key
         self.session = RateLimitedSession(4, 4 / 11, headers=self.headers)
         if cookies and not api_key:
             self.session.cookie_jar.load(cookies)
@@ -102,7 +155,7 @@ class RedAPI:
             accountinfo = await self.request("index")
         except aiohttp.client_exceptions.ContentTypeError as e:
             raise LoginException(e.data) from e
-        if accountinfo['status'] != 'success':
+        if accountinfo["status"] != "success":
             raise LoginException(str(accountinfo))
         self.authkey = accountinfo["response"]["authkey"]
         self.passkey = accountinfo["response"]["passkey"]
@@ -111,13 +164,14 @@ class RedAPI:
             self.username = accountinfo["response"]["username"]
 
     async def login(self, password, username=None):
-        if username: self.username = username
-        loginpage = self.host + '/login.php'
+        if username:
+            self.username = username
+        loginpage = self.host + "/login.php"
         data = {
-            'username': self.username,
-            'password': password,
-            'keeplogged': 1,
-            'login': 'Login'
+            "username": self.username,
+            "password": password,
+            "keeplogged": 1,
+            "login": "Login",
         }
         async with await self.session.post(loginpage, data=data) as resp:
             pass
@@ -126,40 +180,44 @@ class RedAPI:
     async def get_torrent(self, torrent_id, use_fl=False):
         "Download the torrent at torrent_id -> (filename, data)"
         params = {
-            'action': 'download',
-            'id': torrent_id,
+            "action": "download",
+            "id": torrent_id,
         }
         if self.api_key:
-            torrentpage = self.host + '/ajax.php'
+            torrentpage = self.host + "/ajax.php"
         else:
-            torrentpage = self.host + '/torrents.php'
-            params.update({'authkey': self.authkey, 'torrent_pass': self.passkey})
+            torrentpage = self.host + "/torrents.php"
+            params.update({"authkey": self.authkey, "torrent_pass": self.passkey})
         if use_fl:
             await self.fl_bucket.get()
-            params['usetoken'] = '1'
-        async with await self.session.get(torrentpage,
-                                          params=params,
-                                          allow_redirects=False) as response:
-            expected = 'application/x-bittorrent; charset=utf-8'
-            if response.headers['content-type'] != expected:
+            params["usetoken"] = "1"
+        async with await self.session.get(
+            torrentpage, params=params, allow_redirects=False
+        ) as response:
+            expected = "application/x-bittorrent; charset=utf-8"
+            if response.headers["content-type"] != expected:
                 log.error(response.headers)
                 if log.getEffectiveLevel() <= logging.DEBUG:
                     body = await response.content.read()
                     log.debug(body)
-                raise ValueError("Wrong content-type: {}".format(
-                    response.headers['content-type']))
-            match = re.search(r'filename="(.+)"', response.headers['content-disposition'])
+                raise ValueError(
+                    "Wrong content-type: {}".format(response.headers["content-type"])
+                )
+            match = re.search(
+                r'filename="(.+)"', response.headers["content-disposition"]
+            )
             filename = match.group(1)
             return filename, await response.content.read()
 
     async def request(self, action, **kwargs):
         "Make an AJAX request for a given action"
-        ajaxpage = self.host + '/ajax.php'
-        params = {'action': action}
+        ajaxpage = self.host + "/ajax.php"
+        params = {"action": action}
         if self.authkey and not self.api_key:
-            params['auth'] = self.authkey
+            params["auth"] = self.authkey
         params.update(kwargs)
 
+        res = ""
         for i in range(3):
             async with await self.session.get(ajaxpage, params=params) as response:
                 try:
@@ -172,10 +230,10 @@ class RedAPI:
                         raise e
                 except aiohttp.client_exceptions.ClientPayloadError as e:
                     if i == 2:
-                        log.critical('Too many payload errors. Aborting.')
-                        raise RuntimeError('Could not read json payload') from e
-                    log.error('Payload error while reading response, retrying.')
-                    log.debug('Request to %s with params %s', ajaxpage, params)
+                        log.critical("Too many payload errors. Aborting.")
+                        raise RuntimeError("Could not read json payload") from e
+                    log.error("Payload error while reading response, retrying.")
+                    log.debug("Request to %s with params %s", ajaxpage, params)
                     await asyncio.sleep(3)
                 else:
                     break

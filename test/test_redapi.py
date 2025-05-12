@@ -3,6 +3,7 @@ import asyncio
 
 import aiohttp
 import time
+
 pytestmark = pytest.mark.filterwarnings("ignore::DeprecationWarning")
 
 from redlist import redapi
@@ -13,8 +14,10 @@ COOKIES = "tmp.dat"
 
 def test_rate_limit_connector():
     sites = [
-        'https://destiny.gg', 'https://xkcd.com', 'https://smbc-comics.com',
-        'https://youtube.com'
+        "https://destiny.gg",
+        "https://xkcd.com",
+        "https://smbc-comics.com",
+        "https://youtube.com",
     ]
     tokens = 2
     time_frame = 2
@@ -44,7 +47,7 @@ def test_rate_limit_connector():
 
     loop = asyncio.get_event_loop()
     loop.run_until_complete(main())
-    print([f'{r[:30]}...{r[-10:]}' for r in results])
+    print([f"{r[:30]}...{r[-10:]}" for r in results])
     print(finished)
     assert -tokens + len(sites) / (tokens / time_frame) < finished
 
@@ -55,7 +58,7 @@ def test_rate_limit_connector():
 @pytest.mark.asyncio
 async def test_straight_auth(api):
     bucket = api.session.token_bucket
-    new = redapi.RedAPI(user=USERNAME)
+    new = redapi._RedAPI(user=USERNAME)
     new.session.token_bucket = bucket
     with pytest.raises(redapi.LoginException) as execinfo:
         await new._auth()
@@ -65,7 +68,7 @@ async def test_straight_auth(api):
 @pytest.mark.asyncio
 async def test_login(api):
     bucket = api.session.token_bucket
-    red = redapi.RedAPI(user=USERNAME)
+    red = redapi._RedAPI(user=USERNAME)
     red.session.token_bucket = bucket
 
     await red.login(PASSWORD)
@@ -81,7 +84,7 @@ async def test_login(api):
 @pytest.mark.asyncio
 async def test_cookie_auth(api):
     bucket = api.session.token_bucket
-    red = redapi.RedAPI(user=USERNAME)
+    red = redapi._RedAPI(user=USERNAME)
     red.session.token_bucket = bucket
     red.session.cookie_jar.load(COOKIES)
     assert not red.authkey
@@ -89,11 +92,14 @@ async def test_cookie_auth(api):
     assert red.authkey and red.passkey
     await red.session.close()
     import os
+
     os.remove(COOKIES)
 
 
 @pytest.mark.asyncio
 async def test_get_torrent(api):
     filename, data = await api.get_torrent(1327467)
-    assert filename == 'Amon Tobin - Creatures - 1996 (Vinyl - MP3 - 320)-1327467.torrent'
+    assert (
+        filename == "Amon Tobin - Creatures - 1996 (Vinyl - MP3 - 320)-1327467.torrent"
+    )
     assert len(data) == 5286

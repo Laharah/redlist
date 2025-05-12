@@ -127,6 +127,8 @@ async def create_new_playlist(title, ids, description=None, token=None):
                 raise SpotifyError(json=json)
             playlist_id = json["id"]
             log.debug("Created new spotify playlist with id %s", playlist_id)
+            log.debug("Full response:")
+            log.debug(json)
 
         url = f"https://api.spotify.com/v1/playlists/{playlist_id}/tracks"
         params = {"Content-Type": "application/json"}

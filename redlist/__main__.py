@@ -14,7 +14,7 @@ import beets.library
 from pynentry import PinEntryCancelled
 import confuse
 
-from . import redapi
+from .redapi import get_api, API
 from . import redsearch
 from . import playlist
 from . import matching
@@ -34,84 +34,16 @@ except IndexError:
     logging.basicConfig(formatter=ui.UserMessenger())
 
 
-async def main(spotlist, yes=False):
-    # Get Beets library
-    dbpath = config["beets_library"].as_filename()
-    library = beets.library.Library(dbpath)
-
-    # Parse the playlist
-    playlist_title, track_info = await playlist.parse_playlist(spotlist, library)
-    log.info('Successfully parsed playlist "%s".', playlist_title)
-    # Match exsisting tracks
-    log.info("Matching track list to beets library...")
-    matched = matching.beets_match(track_info, library, config["restrict_album"].get())
-    unmatched = [
-        track
-        for track, i in matched.items()
-        if i is None and not isinstance(track, str)
-    ]
-    log.info(
-        "Finished. There are %d/%d tracks that could not be matched.",
-        len(unmatched),
-        len(track_info),
-    )
-    if re.match(r".*\.(m3u|m3u8)$", spotlist) and config["overwrite_m3u"].get():
-        save_path = Path(spotlist)
-        overwrite_flag = True
-    else:
-        save_dir = config["m3u_directory"].as_filename()
-        save_path = Path(save_dir) / "{}.m3u".format(playlist_title)
-        overwrite_flag = False
-    if save_path.exists() and not overwrite_flag:
-        if not yes and not re.match(r"y", input("\nOverwrite %s?: " % save_path)):
-            return 0
-    playlist.create_m3u_from_info(
-        matched,
-        save_path,
-        url=spotlist if playlist.parse_spotfiy_id(spotlist) else None,
-    )
-
-    if len(unmatched) == 0:
-        return 0
-    print("\nThe following tracks could not be matched to your beets library:")
-    print("\n".join(map(str, unmatched)))
-
-    # Search [REDACTED] for missing tracks
-    redacted_disabled = config["redacted"]["disable"].get()
-    if not yes and not redacted_disabled:
-        if not re.match(
-            r"y", input("\nSearch [REDACTED] for missing tracks?(y/n): "), flags=re.I
-        ):
-            missing_track_playlist = config["missing_track_playlist"].get()
-            if missing_track_playlist is None:
-                return 0
-            if not re.match(
-                r"y",
-                input(
-                    "\nWould you like to create a new spotify playlist with the missing tracks?(y/n): "
-                ),
-                flags=re.I,
-            ):
-                return 0
-            await playlist.make_missing_spotify_playlist(playlist_title, unmatched)
-            return 0
-
-    if redacted_disabled:
-        log.info("\nSearching Redacted Disabled.\nFinished!")
-        return 0
+async def search_redlist_and_dl(unmatched, yes=False):
+    api = await get_api()
     log.info("\nConnecting to [REDACTED]...")
-    try:
-        api = await utils.get_api()
-    except PinEntryCancelled:
-        print("Search Canceled.")
-        return 0
     log.info("SUCCESS!")
     log.info("Begining search for %s tracks, This may take a while.", len(unmatched))
 
     async def safe_find_album(track, api):
-        ra = config["restrict_album"].get()
+        restrict_album = config["restrict_album"].get()
         try:
-            return await redsearch.find_album(track, api, restrict_album=ra)
+            return await redsearch.find_album(track, restrict_album=restrict_album)
         except (RuntimeError, ValueError, KeyError) as e:
             log.error("Error while searching for track %s.", track)
             log.debug("Stack Trace:", exc_info=True)
@@ -134,20 +66,6 @@ async def main(spotlist, yes=False):
         len(unmatched) - len(missing),
         len(unmatched),
     )
-    if missing:
-        print("\nThe Following tracks could not be found on [REDACTED]:")
-        for t in missing:
-            print(t)
-        missing_track_playlist = config["missing_track_playlist"].get()
-        if missing_track_playlist is not None:
-            if missing_track_playlist == "yes" or re.match(
-                r"y",
-                input(
-                    "\nWould you like to create a new spotify playlist with the missing tracks?(y/n): "
-                ),
-                flags=re.I,
-            ):
-                await playlist.make_missing_spotify_playlist(playlist_title, missing)
 
     # prune duplicates
     torrent_ids = set()
@@ -201,72 +119,165 @@ async def main(spotlist, yes=False):
             if inpt not in "yne":
                 inpt = ""
         if inpt == "n":
-            return 0
+            return missing
         if inpt == "y":
             y = True
         if inpt == "e":
             downloads = ui.edit_torrent_downloads(downloads)
 
-    use_fl = config["redacted"]["use_fl_tokens"].get()
+    await download_torrents(downloads)
+    return missing
+
+
+async def dl_torrents_to_deluge(downloads, use_fl=False):
+    api = await get_api()
+    with deluge.Client() as client:
+        paused = bool(config["deluge"]["add_paused"].get())
+
+        async def add_torrent(torrent):
+            filename, data = await api.get_torrent(
+                torrent["torrent"]["torrentId"], use_fl
+            )
+            try:
+                client.add_torrent_file(filename, data, paused)
+            except ValueError:
+                log.error(
+                    "Could not add torrent %s to deluge.",
+                    torrent["torrent"]["torrentId"],
+                )
+
+        dls = [
+            asyncio.ensure_future(add_torrent(torrent))
+            for torrent in downloads.values()
+        ]
+        await asyncio.gather(*dls)
+
+    print("Finished.")
+    return
+
+
+async def dl_torrent_to_file(torrent, dl_dir, use_fl=False):
+    dl_dir = config["torrent_directory"].as_filename()
+    api = await get_api()
+    try:
+        filename, data = await api.get_torrent(torrent["torrent"]["torrentId"], use_fl)
+    except ValueError:
+        log.error("Could not download torrent %s.", torrent["torrent"]["torrentId"])
+        log.debug("Error details", exc_info=True)
+        return
+    with open(Path(dl_dir) / filename, "wb") as fout:
+        fout.write(data)
+    log.info("Downloaded %s.", filename)
+
+
+async def download_torrents(downloads):
+    use_fl = bool(config["redacted"]["use_fl_tokens"].get())
+    dl_dir = config["torrent_directory"].as_filename()
     if use_fl:
         log.info(
             "Downloading multiple torrents with FL tokens is SLOW, "
             "expect this to take a while."
         )
-
     if config["enable_deluge"].get():
         try:
-            with deluge.Client() as client:
-                paused = config["deluge"]["add_paused"].get()
-
-                async def add_torrent(torrent):
-                    filename, data = await api.get_torrent(
-                        torrent["torrent"]["torrentId"], use_fl
-                    )
-                    try:
-                        client.add_torrent_file(filename, data, paused)
-                    except ValueError:
-                        log.error(
-                            "Could not add torrent %s to deluge.",
-                            torrent["torrent"]["torrentId"],
-                        )
-
-                dls = [
-                    asyncio.ensure_future(add_torrent(torrent))
-                    for torrent in downloads.values()
-                ]
-                await asyncio.gather(*dls)
-
-            print("Finished.")
-            return 0
+            await dl_torrents_to_deluge(downloads, use_fl)
         except ConnectionRefusedError:
             print("\nThere was an error connecting to the deluge server.")
             print("Saving torrents to files instead.")
             # Fail out to normal download
 
     # Download to files
-    async def dl_torrent(torrent):
-        dl_dir = config["torrent_directory"].as_filename()
-        try:
-            filename, data = await api.get_torrent(
-                torrent["torrent"]["torrentId"], use_fl
-            )
-        except ValueError:
-            log.error("Could not download torrent %s.", torrent["torrent"]["torrentId"])
-            log.debug("Error details", exc_info=True)
-            return
-        with open(Path(dl_dir) / filename, "wb") as fout:
-            fout.write(data)
-        log.info("Downloaded %s.", filename)
 
-    dls = [asyncio.ensure_future(dl_torrent(torrent)) for torrent in downloads.values()]
+    dls = [
+        asyncio.ensure_future(dl_torrent_to_file(torrent, dl_dir, use_fl))
+        for torrent in downloads.values()
+    ]
     await asyncio.gather(*dls)
 
+
+async def main(spotlist, yes=False):
+    # Get Beets library
+    dbpath = config["beets_library"].as_filename()
+    library = beets.library.Library(dbpath)
+
+    # Parse the playlist
+    playlist_title, track_info = await playlist.parse_playlist(spotlist, library)
+    log.info('Successfully parsed playlist "%s".', playlist_title)
+    # Match exsisting tracks
+    log.info("Matching track list to beets library...")
+    matched = matching.beets_match(
+        track_info, library, bool(config["restrict_album"].get())
+    )
+    unmatched = [
+        track
+        for track, i in matched.items()
+        if i is None and not isinstance(track, str)
+    ]
+    log.info(
+        "Finished. There are %d/%d tracks that could not be matched.",
+        len(unmatched),
+        len(track_info),
+    )
+    if re.match(r".*\.(m3u|m3u8)$", spotlist) and config["overwrite_m3u"].get():
+        save_path = Path(spotlist)
+        overwrite_flag = True
+    else:
+        save_dir = config["m3u_directory"].as_filename()
+        save_path = Path(save_dir) / "{}.m3u".format(playlist_title)
+        overwrite_flag = False
+    if save_path.exists() and not overwrite_flag:
+        if yes or re.match(r"y", input("\nOverwrite %s?: " % save_path)):
+            playlist.create_m3u_from_info(
+                matched,
+                save_path,
+                url=spotlist if playlist.parse_spotfiy_id(spotlist) else None,
+            )
+    else:
+        playlist.create_m3u_from_info(
+            matched,
+            save_path,
+            url=spotlist if playlist.parse_spotfiy_id(spotlist) else None,
+        )
+
+    if len(unmatched) == 0:
+        return 0
+    print("\nThe following tracks could not be matched to your beets library:")
+    print("\n".join(map(str, unmatched)))
+
+    # Search [REDACTED] for missing tracks
+    redacted_disabled = config["redacted"]["disable"].get()
+    if redacted_disabled:
+        log.info("\nSearching Redacted is Disabled by config.")
+    if not redacted_disabled:
+        if yes or re.match(
+            r"y", input("\nSearch [REDACTED] for missing tracks?(y/n): "), flags=re.I
+        ):
+            unmatched = await search_redlist_and_dl(unmatched, yes=yes)
+
+        if unmatched:
+            print(
+                "\nThe Following tracks could not be found in beets OR on [REDACTED]:"
+            )
+            for t in unmatched:
+                print(t)
+    missing_track_playlist = config["missing_track_playlist"].get()
+    if (
+        (missing_track_playlist == "yes" and missing_track_playlist != "no")
+        or missing_track_playlist is not None
+        or re.match(
+            r"y",
+            input(
+                "\nWould you like to create a new spotify playlist with the missing tracks?(y/n): "
+            ),
+            flags=re.I,
+        )
+    ):
+        await playlist.make_missing_spotify_playlist(playlist_title, unmatched)
     print("Finished.")
     return 0
 
 
-def entry_point():
+async def cli():
     parser = argparse.ArgumentParser(
         usage="redlist [options] <playlist>...", description=__doc__
     )
@@ -354,7 +365,7 @@ def entry_point():
             config.set_file(options.configfile)
         except confuse.ConfigReadError:
             print("Could not open the config file {}.".format(options.configfile))
-            sys.exit(1)
+            return 2
     if options.show_config:
         utils.resolve_configured_paths(config)
         print(
@@ -363,7 +374,7 @@ def entry_point():
             )
         )
         print(config.dump(redact=options.redact))
-        sys.exit()
+        return 0
     args = options.playlist
     if len(args) < 1:
         parser.error("Must specify at least one playlist")
@@ -371,22 +382,26 @@ def entry_point():
     config.set_args(options, dots=True)
     utils.resolve_configured_paths(config)
     spotlists = args
-    loop = asyncio.get_event_loop()
     results = []
     for splist in spotlists:
         try:
-            results.append(loop.run_until_complete(main(splist, options.yes)))
+            results.append(await main(splist, options.yes))
         except Exception:
             log.error("Error Processing %s.", splist, exc_info=True)
             results.append(1)
 
-    if utils.API is not None and not utils.API.session.closed:
-        loop.run_until_complete(utils.API.session.close())
+    api = await get_api()
+    await api.session.close()
     if not all(r == 0 for r in results):
-        sys.exit(1)
+        return 1
     else:
-        sys.exit()
+        return 0
+
+
+def entry_point():
+    loop = asyncio.get_event_loop()
+    return loop.run_until_complete(cli())
 
 
 if __name__ == "__main__":
-    entry_point()
+    sys.exit(entry_point())
