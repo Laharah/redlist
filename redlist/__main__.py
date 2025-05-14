@@ -1,5 +1,4 @@
 __doc__ = """Save spotify playlists as m3u and fill in missing songs from [REDACTED]"""
-from collections import OrderedDict
 import humanize
 import asyncio
 import sys
@@ -11,7 +10,6 @@ import time
 import os
 
 import beets.library
-from pynentry import PinEntryCancelled
 import confuse
 
 from .redapi import get_api, API
@@ -391,8 +389,9 @@ async def cli():
             log.error("Error Processing %s.", splist, exc_info=True)
             results.append(1)
 
-    api = await get_api()
-    await api.session.close()
+    if API is not None:
+        api = await get_api()
+        await api.session.close()
     if not all(r == 0 for r in results):
         return 1
     else:
