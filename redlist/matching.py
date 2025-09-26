@@ -2,10 +2,9 @@ import re
 import shlex
 import json
 import logging
-from collections import OrderedDict
 from itertools import zip_longest
 
-from beets.autotag import hooks as beethooks
+import beets.autotag as beets_tagger
 from beets import config as beetconfig
 
 from . import config
@@ -15,7 +14,7 @@ VA_ARTISTS = "", "various artists", "various", "va", "unknown"
 log = logging.getLogger(__name__)
 
 # Set higher weight penalty for incorrect artist
-beethooks.config["match"]["distance_weights"]["track_artist"].set(3.0)
+beets_tagger.config["match"]["distance_weights"]["track_artist"].set(3.0)
 
 
 class MatchingError(Exception):
@@ -127,7 +126,7 @@ class TrackInfo:
 
 
 def track_distance(item, track_info, restrict_album=False):
-    dist = beethooks.Distance()
+    dist = beets_tagger.distance.Distance()
 
     if item.length and track_info.length:
         grace = beetconfig["match"]["track_length_grace"].as_number()
@@ -149,7 +148,7 @@ def track_distance(item, track_info, restrict_album=False):
 def match_artist(track_artist, artists):
     d = {}
     for a in artists:
-        dist = beethooks.Distance()
+        dist = beets_tagger.Distance()
         dist.add_string("artist", track_artist, a)
         d[dist] = a
     best = min(d)

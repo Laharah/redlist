@@ -2,7 +2,7 @@ import re
 import logging
 import html
 
-from beets.autotag import hooks as beethooks
+from beets.autotag import distance as beets_tagger
 
 from .redapi import get_api
 from . import matching
@@ -117,7 +117,7 @@ async def search_torrent_groups(track_info, torrent_groups, api, restrict_album=
         group["artist_match"] = group_artist
         if not group_artist:
             continue
-        dist = beethooks.Distance()
+        dist = beets_tagger.Distance()
         dist.add_string("artist", track_info.artist, group_artist)
         if track_info.album:
             dist.add_string("album", track_info.album, group["groupName"])
