@@ -88,6 +88,8 @@ permissions to read anything but your playlists.  It also allows redlist to crea
 (private) playlists for you (should you want it to). [RED]list stores this api token in
 the config directory and refreshes and re-uses it for future use.
 
+***Note: The re-direct url is set to `http://127.0.0.1:8989/` as a dummy address. If you have a process listening on that port that may cause re-directs, you may have to temporarily disable it during authentication with Spotify.***
+
 ## Configuration
 
 [RED]list has several configuration options. The defaults are shown here:
