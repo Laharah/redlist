@@ -172,7 +172,7 @@ def generate_auth_url():
     data = {
         "client_id": CLIENT_ID,
         "response_type": "code",
-        "redirect_uri": "http://localhost/",
+        "redirect_uri": "http://127.0.0.1:8989/",
         "scope": "playlist-modify-private",
     }
     return "?".join((AUTH_URL, urlencode(data)))
@@ -227,7 +227,7 @@ class SpotifyAccessToken:
         code = parse_resp_code(redirect)
 
         data = {
-            "redirect_uri": "http://localhost/",
+            "redirect_uri": "http://127.0.0.1:8989/",
             "code": code,
             "scope": ["playlist-modify-private"],
             "grant_type": "authorization_code",
