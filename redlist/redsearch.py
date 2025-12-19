@@ -102,7 +102,7 @@ async def find_album(track_info, restrict_album=True):
         if "," in track_info.artist:
             track_info._clean_feat()
             log.info("Suspect multi-artist track, re-searching with %s", track_info)
-            return await find_album(track_info, api, restrict_album)
+            return await find_album(track_info, restrict_album)
         log.info("Could not automatically find torrent for %s. Giving up.", track_info)
     return hit
 
