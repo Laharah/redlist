@@ -4,7 +4,7 @@
 [RED]list is a tool to glue together Spotify, [Beets](https://beets.io), and [REDACTED].
 
 ## Installation
-[RED]list requires python 3.6+. 
+[RED]list requires python 3.6+.
 
 [RED]list also expects you to have a populated [Beets](https://beets.io)
 library. It will use it to find and match your music files.
@@ -48,12 +48,12 @@ optional arguments:
                         Set the log level. (Default: INFO)
 ```
 
-Where playlist is a Spotify playlist (uri or url), an m3u, or a csv file (artist, title, album). 
+Where playlist is a Spotify playlist (uri or url), an m3u, or a csv file (artist, title, album).
 
 [RED]list will use your local beets library (located automatically) and do it's best to
 match tracks from the playlist to tracks in your library and write the results to m3u. Any
 missing tracks can then be automatically searched for on [REDACTED] and torrents will be
-downloaded or, if you use deluge, added to a running deluge instance. 
+downloaded or, if you use deluge, added to a running deluge instance.
 
 [RED]list can then be re-run any time on the created m3u playlist to re-match any
 previously missing files.
@@ -102,7 +102,7 @@ torrent_directory: null      # Directory save downloaded torrents
 m3u_directory: null          # Directory to save processed m3u playlists
 restrict_album: no           # Only allow tracks to match if they are from the same album
 overwrite_m3u: no            # If argument is m3u, overwrite it instead of saving to m3u_dir
-missing_track_playlist: null # set to a value to have redlist ask to create a spotify playlist of missing tracks
+missing_track_playlist: null # Whether redlist should create a spotify playlist of missing tracks. `yes`, `no` or any other value for manual confirmation
 
 redacted:
   disable: no                # Disable [REDACTED] search entirely.
@@ -157,7 +157,7 @@ redacted:
 This will set [RED]list to automatically add torrents to a deluge server running at
 example.com. By setting `missing_track_playlist` [RED]list will prompt the user if they
 want to create a spotify playlist containing tracks that couldn't be found (could be set
-to `yes` to do so automatically). 
+to `yes` to do so automatically).
 
 It also specifies the preferred torrent formats. The preferences are listed as regex
 strings in the preferred order. The regex strings are matched against a string of the
