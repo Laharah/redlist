@@ -290,7 +290,7 @@ async def cli():
     parser.add_argument(
         "--downloads",
         dest="torrent_directory",
-        help=("Directory new torrents will be saved to " "(exclusive with --deluge)"),
+        help=("Directory new torrents will be saved to (exclusive with --deluge)"),
     )
     parser.add_argument(
         "-y",
@@ -325,7 +325,7 @@ async def cli():
     parser.add_argument(
         "--use-fl-tokens",
         dest="redacted.use_fl_tokens",
-        help="Use freeleach tokens " "(note: slows torrent download SIGNIFICANTLY).",
+        help="Use freeleach tokens (note: slows torrent download SIGNIFICANTLY).",
         action="store_const",
         const=True,
     )
@@ -341,8 +341,7 @@ async def cli():
         action="store_const",
         const=True,
         help=(
-            "If argument is an m3u, overwrite it "
-            "instead of outputting to playlist dir."
+            "If argument is an m3u, overwrite it instead of outputting to playlist dir."
         ),
     )
     parser.add_argument(
@@ -399,7 +398,8 @@ async def cli():
 
 
 def entry_point():
-    loop = asyncio.get_event_loop()
+    loop = asyncio.new_event_loop()
+    asyncio.set_event_loop(loop)
     return loop.run_until_complete(cli())
 
 
