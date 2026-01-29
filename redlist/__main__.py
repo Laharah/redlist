@@ -259,19 +259,32 @@ async def main(spotlist, yes=False):
             )
             for t in unmatched:
                 print(t)
+
+    # Check whether a spotify playlist with the missing songs shall be created.
     missing_track_playlist = config["missing_track_playlist"].get()
-    if (
-        (missing_track_playlist == "yes" and missing_track_playlist != "no")
-        or missing_track_playlist is not None
-        or re.match(
-            r"y",
-            input(
-                "\nWould you like to create a new spotify playlist with the missing tracks?(y/n): "
-            ),
-            flags=re.I,
-        )
-    ):
+    create_spotify_playlist = False
+    if missing_track_playlist == "yes":
+        create_spotify_playlist = True
+    elif missing_track_playlist != "no":
+        pass
+    else:
+        # If the value is anything else, ask the user.
+        if (
+            missing_track_playlist is not None
+            and yes
+            or re.match(
+                r"y",
+                input(
+                    "\nWould you like to create a new spotify playlist with the missing tracks?(y/n): "
+                ),
+                flags=re.I,
+            )
+        ):
+            create_spotify_playlist = True
+
+    if create_spotify_playlist:
         await playlist.make_missing_spotify_playlist(playlist_title, unmatched)
+
     print("Finished.")
     return 0
 
