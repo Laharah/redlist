@@ -265,7 +265,7 @@ async def main(spotlist, yes=False):
     create_spotify_playlist = False
     if missing_track_playlist == "yes":
         create_spotify_playlist = True
-    elif missing_track_playlist != "no":
+    elif missing_track_playlist == "no":
         pass
     else:
         # If the value is anything else, ask the user.
