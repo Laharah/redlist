@@ -167,7 +167,19 @@ def beets_match(track_info, lib, restrict_album=False):
         if not isinstance(t, TrackInfo):
             log.debug("%s is not a TrackInfo object, skipping.", t)
             continue
-        res = list(lib.items(shlex.quote("title:" + t.title)))
+
+        res = []
+        if config["spotify_id_matching"].get():
+            try:
+                log.debug("Attempting spotify id matching for %s", t.spotify_id)
+                res.extend(lib.items(shlex.quote("spotify_track_id:=" + t.spotify_id)))
+            except AttributeError:
+                pass
+            if res:
+                matched[t] = res[0]
+                continue
+        if not res:
+            res.extend(lib.items(shlex.quote("title:" + t.title)))
         if not res and t.album:
             res.extend(lib.items(shlex.quote("album:" + t.album)))
         if not res and t.artist:

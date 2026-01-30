@@ -1,9 +1,11 @@
 # [RED]list
-### Convert Spotify playlists to local m3u's and fill the gaps!
+
+### Convert Spotify playlists to local m3u's and fill the gaps
 
 [RED]list is a tool to glue together Spotify, [Beets](https://beets.io), and [REDACTED].
 
 ## Installation
+
 [RED]list requires python 3.6+.
 
 [RED]list also expects you to have a populated [Beets](https://beets.io)
@@ -14,6 +16,7 @@ To install simply run:
 `pip install git+https://github.com/Laharah/redlist.git`
 
 ## Usage
+
 ```
 usage: redlist [options] <playlist>...
 
@@ -58,7 +61,6 @@ downloaded or, if you use deluge, added to a running deluge instance.
 [RED]list can then be re-run any time on the created m3u playlist to re-match any
 previously missing files.
 
-
 ## Security
 
 The First time you run [RED]list you will be prompted to grant it access to both Spotify
@@ -93,6 +95,7 @@ the config directory and refreshes and re-uses it for future use.
 ## Configuration
 
 [RED]list has several configuration options. The defaults are shown here:
+
 ``` yaml
 beets_library: null          # Usually found automatically
 beets_match_threshold: 0.3   # maximum difference between tracks to match (lower is stricter)
@@ -103,6 +106,7 @@ m3u_directory: null          # Directory to save processed m3u playlists
 restrict_album: no           # Only allow tracks to match if they are from the same album
 overwrite_m3u: no            # If argument is m3u, overwrite it instead of saving to m3u_dir
 missing_track_playlist: null # Whether redlist should create a spotify playlist of missing tracks. `yes`, `no` or any other value for manual confirmation
+spotify_id_matching: no      # Search library using spotify_track_id first. Can be slow. A spotify_track_id match is considered exact, ignoring other fields.
 
 redacted:
   disable: no                # Disable [REDACTED] search entirely.
@@ -139,7 +143,9 @@ configuration looks like. You may also override your config file from the
 command line with the `--config` option.
 
 ### Example
+
 The config uses YAML syntax. An example config might look like so:
+
 ``` yaml
 missing_track_playlist: prompt
 enable_deluge: yes
@@ -164,13 +170,12 @@ strings in the preferred order. The regex strings are matched against a string o
 format `"format encoding media"` eg:(`MP3 V0 (VBR) Web`).  The above regex strings can be
 interpreted as such:
 
-- `'FLAC .* (CD|Vinyl)'`: Any FLAC from CD or vinyl media.
-- `'FLAC (lossless|24bit Lossless)'`: otherwise, a lossless or 24bit lossless FLAC from any media
-- `'MP3 (V0|320)'`: otherwise, An MP3 encoded at either V0 or 320, from any media
-- `'.*'`: If none of the above can be found, accept whatever is available
+* `'FLAC .* (CD|Vinyl)'`: Any FLAC from CD or vinyl media.
+* `'FLAC (lossless|24bit Lossless)'`: otherwise, a lossless or 24bit lossless FLAC from any media
+* `'MP3 (V0|320)'`: otherwise, An MP3 encoded at either V0 or 320, from any media
+* `'.*'`: If none of the above can be found, accept whatever is available
 
 *note: the regex strings are not case sensitive*
 
 [RED]list will only choose torrents that match at least one of your given preferences.
 This is why you usually want to end your preferences with a permissive rule.
-
