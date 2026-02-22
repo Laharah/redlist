@@ -47,17 +47,27 @@ async def search_redlist_and_dl(unmatched, yes=False):
             log.debug("Stack Trace:", exc_info=True)
             return None
 
-    tasks = {}
-    for track in unmatched:
-        task = asyncio.ensure_future(safe_find_album(track, api))
-        tasks[track] = task
+    results = {}
     match_start = time.monotonic()
-    await asyncio.gather(*tasks.values())
+    # Searching for redacted releases in parallel results in the logs of the
+    # different lookups to be jumbled, which makes them virtually unusable.
+    # For debugging/understanding how decisions were made, users can set
+    # the "single_threaded" option to limit lookup to a single task at a time.
+    if config["redacted"]["single_threaded"]:
+        for track in unmatched:
+            results[track] = await safe_find_album(track, api)
+    else:
+        tasks = {}
+        for track in unmatched:
+            task = asyncio.ensure_future(safe_find_album(track, api))
+            tasks[track] = task
+        await asyncio.gather(*tasks.values())
+        results = {t: v.result() for t, v in tasks.items()}
+
     match_end = time.monotonic()
     log.info(
         "Searching complete after %s!", humanize.naturaldelta(match_end - match_start)
     )
-    results = {t: v.result() for t, v in tasks.items()}
     missing = [t for t, v in results.items() if v is None]
     log.info(
         "Found matches for %d/%d unmatched tracks",

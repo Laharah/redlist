@@ -109,6 +109,7 @@ redacted:
   api_key: null              # Preferred method. Go to User Settings > API Keys and confirm a new key.
   username: null
   password: null
+  single_threaded: no        # Enable to get sequentially readable logs, but slower redacted API lookup.
   save_cookies: yes
   use_fl_tokens: no          # Use freeleach tokens (slows downloads SIGNIFICANTLY)
   format_preferences:        # "Format Encoding Media"
