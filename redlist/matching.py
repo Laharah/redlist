@@ -4,8 +4,8 @@ import json
 import logging
 from itertools import zip_longest
 
-import beets.autotag as beets_tagger
 from beets import config as beetconfig
+import beets.autotag as beets_tagger
 
 from . import config
 
@@ -14,7 +14,7 @@ VA_ARTISTS = "", "various artists", "various", "va", "unknown"
 log = logging.getLogger(__name__)
 
 # Set higher weight penalty for incorrect artist
-beets_tagger.config["match"]["distance_weights"]["track_artist"].set(3.0)
+beetconfig["match"]["distance_weights"]["track_artist"].set(3.0)
 
 
 class MatchingError(Exception):
