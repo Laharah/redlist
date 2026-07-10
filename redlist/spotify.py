@@ -56,7 +56,7 @@ async def fetch_play_list_data(playlist_id, token=None):
         while data["next"]:
             async with session.get(data["next"]) as resp:
                 if resp.status == 429:  # Rate limit exceded
-                    await asyncio.sleep(resp.headers["Retry-After"] + 1)
+                    await asyncio.sleep(int(resp.headers["Retry-After"]) + 1)
                     continue
                 json = await resp.json()
             try:  # First iteration
@@ -65,15 +65,22 @@ async def fetch_play_list_data(playlist_id, token=None):
             except KeyError:  # more than 100 data
                 log.debug("Fetching more playlist tracks from Spotify.")
                 data = json
-            try:
-                tracks.extend(
-                    matching.TrackInfo.from_spotify(t)
-                    for t in data["items"]
-                    if t["track"] is not None
-                )
-            except matching.MatchingError as e:
-                pprint.pprint(e.data)
-                raise
+            for track in data["items"]:
+                try:
+                    if track["track"] is None:
+                        continue
+                    tracks.append(matching.TrackInfo.from_spotify(track))
+                except matching.MatchingError as e:
+                    log.exception(
+                        f"Could not create TrackInfo for track number {len(tracks) + 1}."
+                    )
+                    pprint.pprint(e.data)
+                    continue
+                except ValueError:
+                    log.exception(
+                        f"Could not create TrackInfo for track number {len(tracks) + 1}."
+                    )
+                    continue
             log.debug("%s tracks Fetched from playlist.", len(tracks))
     name = re.sub(r"[\\/]", "_", name)
     name = sanitize_path(name)
