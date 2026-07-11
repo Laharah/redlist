@@ -52,6 +52,7 @@ async def fetch_play_list_data(playlist_id, token=None):
     data = {"next": url}
     name = playlist_id
     tracks = []
+    skipped_tracks = 0
     async with aiohttp.ClientSession(headers=token.auth_header) as session:
         while data["next"]:
             async with session.get(data["next"]) as resp:
@@ -68,17 +69,20 @@ async def fetch_play_list_data(playlist_id, token=None):
             for track in data["items"]:
                 try:
                     if track["track"] is None:
+                        skipped_tracks += 1
                         continue
                     tracks.append(matching.TrackInfo.from_spotify(track))
                 except matching.MatchingError as e:
+                    skipped_tracks += 1
                     log.exception(
-                        f"Could not create TrackInfo for track number {len(tracks) + 1}."
+                        f"Could not create TrackInfo for track number {len(tracks) + skipped_tracks}."
                     )
                     pprint.pprint(e.data)
                     continue
                 except ValueError:
+                    skipped_tracks += 1
                     log.exception(
-                        f"Could not create TrackInfo for track number {len(tracks) + 1}."
+                        f"Could not create TrackInfo for track number {len(tracks) + skipped_tracks}."
                     )
                     continue
             log.debug("%s tracks Fetched from playlist.", len(tracks))
